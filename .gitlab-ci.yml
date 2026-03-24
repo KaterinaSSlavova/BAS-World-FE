@@ -1,0 +1,10 @@
+stages:
+  - build
+  - test
+  - sonarqube-check
+
+build:
+  stage: build
+  script:
+    - npm ci
+    - npm run build
