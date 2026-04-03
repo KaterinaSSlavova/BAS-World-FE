@@ -7,10 +7,10 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue
-} from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
+} from "../components/ui/select"
+import { Button } from "../components/ui/button"
 import { Search, Plus, Filter } from "lucide-react"
-import { mockProducts, StatusBadge, RuleTypeBadge } from "@/data/mockData"
+import { mockProducts, StatusBadge, RuleTypeBadge } from "../data/mock_data_products.tsx"
 import {
     Table,
     TableBody,
