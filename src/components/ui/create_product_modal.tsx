@@ -1,12 +1,17 @@
 import { CSSProperties } from "react";
 
 export type CreateProductFormData = {
-    productName: string;
+    sku: string;
+    name: string;
+    description: string;
+    brand: string;
     price: number | "";
-    stock: number | "";
-    ruleType: string;
     status: string;
-    depot: string;
+    typeId: number | "";
+    categoryId: number | "";
+    depotId: number | "";
+    stockQuantity: number | "";
+    isAvailable: boolean;
 };
 
 interface CreateProductModalProps {
@@ -15,7 +20,7 @@ interface CreateProductModalProps {
     onClose: () => void;
     onChange: (
         field: keyof CreateProductFormData,
-        value: string | number
+        value: string | number | boolean
     ) => void;
     onSubmit: () => void;
 }
@@ -33,7 +38,7 @@ const overlayStyle: CSSProperties = {
 
 const modalStyle: CSSProperties = {
     width: "100%",
-    maxWidth: 720,
+    maxWidth: 820,
     background: "#fff",
     borderRadius: 16,
     boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
@@ -57,6 +62,21 @@ const inputStyle: CSSProperties = {
     boxSizing: "border-box",
     outline: "none",
     fontFamily: "inherit",
+};
+
+const textareaStyle: CSSProperties = {
+    width: "100%",
+    minHeight: 96,
+    border: "1px solid #dfe5df",
+    borderRadius: 10,
+    padding: "12px 14px",
+    fontSize: 14,
+    color: "#2d3340",
+    background: "#fff",
+    boxSizing: "border-box",
+    outline: "none",
+    fontFamily: "inherit",
+    resize: "vertical",
 };
 
 const labelStyle: CSSProperties = {
@@ -114,12 +134,34 @@ export default function CreateProductModal({
                     }}
                 >
                     <div style={{ display: "flex", flexDirection: "column" }}>
+                        <label style={labelStyle}>SKU</label>
+                        <input
+                            type="text"
+                            value={formData.sku}
+                            onChange={(e) => onChange("sku", e.target.value)}
+                            placeholder="PRD-011"
+                            style={inputStyle}
+                        />
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column" }}>
                         <label style={labelStyle}>Product Name</label>
                         <input
                             type="text"
-                            value={formData.productName}
-                            onChange={(e) => onChange("productName", e.target.value)}
+                            value={formData.name}
+                            onChange={(e) => onChange("name", e.target.value)}
                             placeholder="Small Truck Tyres"
+                            style={inputStyle}
+                        />
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                        <label style={labelStyle}>Brand</label>
+                        <input
+                            type="text"
+                            value={formData.brand}
+                            onChange={(e) => onChange("brand", e.target.value)}
+                            placeholder="Bosch"
                             style={inputStyle}
                         />
                     </div>
@@ -141,13 +183,13 @@ export default function CreateProductModal({
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Stock</label>
+                        <label style={labelStyle}>Stock Quantity</label>
                         <input
                             type="number"
-                            value={formData.stock}
+                            value={formData.stockQuantity}
                             onChange={(e) =>
                                 onChange(
-                                    "stock",
+                                    "stockQuantity",
                                     e.target.value === "" ? "" : Number(e.target.value)
                                 )
                             }
@@ -157,42 +199,105 @@ export default function CreateProductModal({
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Depot</label>
-                        <input
-                            type="text"
-                            value={formData.depot}
-                            onChange={(e) => onChange("depot", e.target.value)}
-                            placeholder="Veghel NL"
-                            style={inputStyle}
-                        />
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Rule Type</label>
-                        <select
-                            value={formData.ruleType}
-                            onChange={(e) => onChange("ruleType", e.target.value)}
-                            style={inputStyle}
-                        >
-                            <option value="">None</option>
-                            <option value="opt-in">Opt-in</option>
-                            <option value="mandatory">Mandatory</option>
-                            <option value="opt-out">Opt-out</option>
-                        </select>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column" }}>
                         <label style={labelStyle}>Status</label>
                         <select
                             value={formData.status}
                             onChange={(e) => onChange("status", e.target.value)}
                             style={inputStyle}
                         >
-                            <option value="">None</option>
-                            <option value="active">Active</option>
-                            <option value="low_stock">Low Stock</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="">Select status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Archived">Archived</option>
                         </select>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                        <label style={labelStyle}>Type</label>
+                        <select
+                            value={formData.typeId}
+                            onChange={(e) =>
+                                onChange(
+                                    "typeId",
+                                    e.target.value === "" ? "" : Number(e.target.value)
+                                )
+                            }
+                            style={inputStyle}
+                        >
+                            <option value="">Select type</option>
+                            <option value={1}>Physical Product</option>
+                        </select>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                        <label style={labelStyle}>Category</label>
+                        <select
+                            value={formData.categoryId}
+                            onChange={(e) =>
+                                onChange(
+                                    "categoryId",
+                                    e.target.value === "" ? "" : Number(e.target.value)
+                                )
+                            }
+                            style={inputStyle}
+                        >
+                            <option value="">Select category</option>
+                            <option value={1}>Tyre</option>
+                        </select>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                        <label style={labelStyle}>Depot</label>
+                        <select
+                            value={formData.depotId}
+                            onChange={(e) =>
+                                onChange(
+                                    "depotId",
+                                    e.target.value === "" ? "" : Number(e.target.value)
+                                )
+                            }
+                            style={inputStyle}
+                        >
+                            <option value="">Select depot</option>
+                            <option value={1}>Eindhoven Depot</option>
+                        </select>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                        <label style={labelStyle}>Availability</label>
+                        <label
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 10,
+                                fontSize: 14,
+                                color: "#2d3340",
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={formData.isAvailable}
+                                onChange={(e) => onChange("isAvailable", e.target.checked)}
+                            />
+                            Available
+                        </label>
+                    </div>
+
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gridColumn: "1 / -1",
+                        }}
+                    >
+                        <label style={labelStyle}>Description</label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => onChange("description", e.target.value)}
+                            placeholder="Big truck tyres"
+                            style={textareaStyle}
+                        />
                     </div>
                 </div>
 
