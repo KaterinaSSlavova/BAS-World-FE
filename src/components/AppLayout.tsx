@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 
 interface AppLayoutProps {
@@ -6,12 +6,24 @@ interface AppLayoutProps {
 }
 
 const AppLayout = ({ children }: AppLayoutProps) => {
-    const [active, setActive] = useState("Dashboard");
-
     return (
-        <div className="flex min-h-screen">
-            <Sidebar active={active} setActive={setActive} />
-            <main className="flex-1 ml-64 p-8">
+        <div
+            style={{
+                display: "flex",
+                minHeight: "100vh",
+                background: "#f4f6f4",
+                fontFamily: "'DM Sans', sans-serif",
+            }}
+        >
+            <Sidebar />
+            <main
+                style={{
+                    flex: 1,
+                    padding: "32px 36px",
+                    background: "#f4f6f4",
+                    overflow: "auto",
+                }}
+            >
                 {children}
             </main>
         </div>
