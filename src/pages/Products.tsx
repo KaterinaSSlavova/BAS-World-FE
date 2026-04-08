@@ -6,11 +6,6 @@ import CreateProductModal, {
 } from "../components/ui/create_product_modal";
 import ProductDetailsModal from "../components/ui/product-details-modal";
 import AppLayout from "../components/AppLayout";
-import {
-    StatusBadge,
-    RuleTypeBadge,
-    type Product,
-} from "../data/mock_data_products";
 
 type BackendProductDepot = {
     available: boolean;
@@ -27,17 +22,106 @@ type BackendProductDepot = {
     type: string;
 };
 
-function mapBackendProductToFrontend(item: BackendProductDepot): Product {
+type ProductRow = {
+    id: string;
+    sku: string;
+    name: string;
+    brand: string;
+    category: string;
+    price: number;
+    stockQuantity: number;
+    status: string;
+    type: string;
+    depotName: string;
+    available: boolean;
+    description: string;
+};
+
+function mapBackendProductToFrontend(item: BackendProductDepot): ProductRow {
     return {
         id: item.sku,
+        sku: item.sku,
         name: item.productName,
+        brand: item.brand,
         category: item.category,
         price: Number(item.price),
-        stock: Number(item.stockQuantity),
-        ruleType: "" as Product["ruleType"],
-        status: item.status === "Active" ? "active" : "inactive",
-        depots: [item.depotName],
+        stockQuantity: Number(item.stockQuantity),
+        status: item.status,
+        type: item.type,
+        depotName: item.depotName,
+        available: item.available,
+        description: item.description,
     };
+}
+
+function formatPrice(value: number) {
+    return new Intl.NumberFormat("en-EU", {
+        style: "currency",
+        currency: "EUR",
+        maximumFractionDigits: 0,
+    }).format(value);
+}
+
+function StatusPill({ status }: { status: string }) {
+    const normalized = status.toLowerCase();
+
+    let background = "#e8f5ec";
+    let color = "#2e9d5b";
+    let border = "1px solid #b9dec6";
+
+    if (normalized === "inactive" || normalized === "archived") {
+        background = "#f3f4f6";
+        color = "#6b7280";
+        border = "1px solid #d1d5db";
+    }
+
+    if (normalized === "draft") {
+        background = "#fff7e8";
+        color = "#d97706";
+        border = "1px solid #f5d29c";
+    }
+
+    return (
+        <span
+            style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minWidth: 88,
+                padding: "8px 14px",
+                borderRadius: 999,
+                background,
+                color,
+                border,
+                fontSize: 14,
+                fontWeight: 700,
+            }}
+        >
+      {status}
+    </span>
+    );
+}
+
+function AvailabilityPill({ available }: { available: boolean }) {
+    return (
+        <span
+            style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minWidth: 96,
+                padding: "8px 14px",
+                borderRadius: 999,
+                background: available ? "#e8f5ec" : "#f3f4f6",
+                color: available ? "#2e9d5b" : "#6b7280",
+                border: available ? "1px solid #b9dec6" : "1px solid #d1d5db",
+                fontSize: 14,
+                fontWeight: 700,
+            }}
+        >
+      {available ? "Available" : "Unavailable"}
+    </span>
+    );
 }
 
 export default function Products() {
@@ -46,9 +130,9 @@ export default function Products() {
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(null);
 
-    const [products, setProducts] = useState<Product[]>([]);
+    const [products, setProducts] = useState<ProductRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -66,7 +150,6 @@ export default function Products() {
         isAvailable: true,
     });
 
-    // 🔹 LOAD PRODUCTS
     useEffect(() => {
         const loadProducts = async () => {
             try {
@@ -88,7 +171,6 @@ export default function Products() {
         loadProducts();
     }, []);
 
-    // 🔹 FORM CHANGE
     const handleProductFormChange = (
         field: keyof CreateProductFormData,
         value: string | number | boolean
@@ -99,7 +181,6 @@ export default function Products() {
         }));
     };
 
-    // 🔹 RESET FORM
     const resetForm = () => {
         setNewProduct({
             sku: "",
@@ -116,7 +197,6 @@ export default function Products() {
         });
     };
 
-    // 🔥 CREATE PRODUCT (CONNECTED TO BACKEND)
     const handleCreateProduct = async () => {
         const {
             sku,
@@ -165,7 +245,6 @@ export default function Products() {
 
             await createProduct(payload);
 
-            // reload products
             const data = await getAllProductDepots();
             setProducts(data.map(mapBackendProductToFrontend));
 
@@ -177,19 +256,17 @@ export default function Products() {
         }
     };
 
-    // 🔹 DETAILS
-    const handleOpenDetails = (product: Product) => {
+    const handleOpenDetails = (product: ProductRow) => {
         setSelectedProduct(product);
         setShowDetailsModal(true);
     };
 
-    const handleSaveEditedProduct = (updatedProduct: Product) => {
+    const handleSaveEditedProduct = (updatedProduct: ProductRow) => {
         setProducts((prev) =>
             prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
         );
     };
 
-    // 🔹 FILTERS
     const categories = useMemo(
         () => [...new Set(products.map((p) => p.category))],
         [products]
@@ -199,7 +276,8 @@ export default function Products() {
         return products.filter((p) => {
             const matchesSearch =
                 p.name.toLowerCase().includes(search.toLowerCase()) ||
-                p.id.toLowerCase().includes(search.toLowerCase());
+                p.sku.toLowerCase().includes(search.toLowerCase()) ||
+                p.brand.toLowerCase().includes(search.toLowerCase());
 
             const matchesCategory =
                 categoryFilter === "all" || p.category === categoryFilter;
@@ -211,14 +289,33 @@ export default function Products() {
     return (
         <AppLayout>
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                {/* HEADER */}
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        gap: 16,
+                    }}
+                >
                     <div>
-                        <h1 style={{ fontSize: 28, fontWeight: 700 }}>
+                        <h1
+                            style={{
+                                margin: 0,
+                                fontSize: 28,
+                                fontWeight: 800,
+                                color: "#1f2937",
+                            }}
+                        >
                             Products
                         </h1>
-                        <p style={{ color: "#7f8792" }}>
-                            Manage cross-sell products
+                        <p
+                            style={{
+                                margin: "8px 0 0",
+                                color: "#7f8792",
+                                fontSize: 16,
+                            }}
+                        >
+                            Manage cross-sell products and services
                         </p>
                     </div>
 
@@ -228,59 +325,218 @@ export default function Products() {
                             background: "#2e9d5b",
                             color: "#fff",
                             border: "none",
-                            borderRadius: 10,
+                            borderRadius: 12,
                             padding: "14px 22px",
                             fontWeight: 700,
+                            fontSize: 16,
                             cursor: "pointer",
+                            boxShadow: "0 4px 12px rgba(46,157,91,0.18)",
                         }}
                     >
                         + Add Product
                     </button>
                 </div>
 
-                {/* SEARCH + FILTER */}
-                <div style={{ display: "flex", gap: 16 }}>
+                <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                     <input
-                        placeholder="Search..."
+                        placeholder="Search products..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        style={{ padding: 12, borderRadius: 8 }}
+                        style={{
+                            flex: 1,
+                            minWidth: 280,
+                            height: 52,
+                            borderRadius: 12,
+                            border: "1px solid #d9dee5",
+                            padding: "0 16px",
+                            fontSize: 16,
+                            background: "#fff",
+                            color: "#2d3340",
+                            outline: "none",
+                            boxSizing: "border-box",
+                        }}
                     />
 
                     <select
                         value={categoryFilter}
                         onChange={(e) => setCategoryFilter(e.target.value)}
+                        style={{
+                            width: 260,
+                            height: 52,
+                            borderRadius: 12,
+                            border: "1px solid #d9dee5",
+                            padding: "0 16px",
+                            fontSize: 16,
+                            background: "#fff",
+                            color: "#2d3340",
+                            outline: "none",
+                        }}
                     >
-                        <option value="all">All</option>
+                        <option value="all">All Categories</option>
                         {categories.map((c) => (
-                            <option key={c}>{c}</option>
+                            <option key={c} value={c}>
+                                {c}
+                            </option>
                         ))}
                     </select>
                 </div>
 
-                {/* TABLE */}
-                {loading ? (
-                    <p>Loading...</p>
-                ) : error ? (
-                    <p style={{ color: "red" }}>{error}</p>
-                ) : (
-                    filtered.map((product) => (
-                        <div
-                            key={product.id}
-                            onClick={() => handleOpenDetails(product)}
-                            style={{
-                                padding: 16,
-                                borderBottom: "1px solid #eee",
-                                cursor: "pointer",
-                            }}
-                        >
-                            {product.name} — €{product.price}
+                <div
+                    style={{
+                        background: "#fff",
+                        borderRadius: 18,
+                        border: "1px solid #e6eaef",
+                        overflow: "hidden",
+                    }}
+                >
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "1.1fr 2fr 1.5fr 1.3fr 1fr 1.3fr 1.2fr 1.2fr 1.5fr 1.3fr",
+                            gap: 16,
+                            padding: "20px 22px",
+                            borderBottom: "1px solid #eef1f4",
+                            background: "#fbfcfd",
+                            fontSize: 12,
+                            fontWeight: 800,
+                            color: "#7b8494",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                        }}
+                    >
+                        <div>SKU</div>
+                        <div>Product</div>
+                        <div>Brand</div>
+                        <div>Category</div>
+                        <div>Price</div>
+                        <div>Stock</div>
+                        <div>Status</div>
+                        <div>Type</div>
+                        <div>Depot</div>
+                        <div>Availability</div>
+                    </div>
+
+                    {loading ? (
+                        <div style={{ padding: 24, color: "#7f8792" }}>Loading...</div>
+                    ) : error ? (
+                        <div style={{ padding: 24, color: "#d14343" }}>{error}</div>
+                    ) : filtered.length === 0 ? (
+                        <div style={{ padding: 24, color: "#7f8792" }}>
+                            No products found.
                         </div>
-                    ))
-                )}
+                    ) : (
+                        filtered.map((product) => (
+                            <div
+                                key={product.id}
+                                onClick={() => handleOpenDetails(product)}
+                                style={{
+                                    display: "grid",
+                                    gridTemplateColumns:
+                                        "1.1fr 2fr 1.5fr 1.3fr 1fr 1.3fr 1.2fr 1.2fr 1.5fr 1.3fr",
+                                    gap: 16,
+                                    padding: "22px",
+                                    borderBottom: "1px solid #eef1f4",
+                                    cursor: "pointer",
+                                    alignItems: "center",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        fontSize: 16,
+                                        color: "#7b8494",
+                                        lineHeight: 1.4,
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    {product.sku}
+                                </div>
+
+                                <div>
+                                    <div
+                                        style={{
+                                            fontSize: 18,
+                                            fontWeight: 700,
+                                            color: "#273142",
+                                            lineHeight: 1.35,
+                                        }}
+                                    >
+                                        {product.name}
+                                    </div>
+                                </div>
+
+                                <div
+                                    style={{
+                                        fontSize: 16,
+                                        color: "#6b7280",
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    {product.brand}
+                                </div>
+
+                                <div
+                                    style={{
+                                        fontSize: 16,
+                                        color: "#6b7280",
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    {product.category}
+                                </div>
+
+                                <div
+                                    style={{
+                                        fontSize: 16,
+                                        color: "#273142",
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    {formatPrice(product.price)}
+                                </div>
+
+                                <div
+                                    style={{
+                                        fontSize: 16,
+                                        color: "#273142",
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    {product.stockQuantity}
+                                </div>
+
+                                <div>
+                                    <StatusPill status={product.status} />
+                                </div>
+
+                                <div
+                                    style={{
+                                        fontSize: 15,
+                                        color: "#6b7280",
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    {product.type}
+                                </div>
+
+                                <div
+                                    style={{
+                                        fontSize: 15,
+                                        color: "#6b7280",
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    {product.depotName}
+                                </div>
+
+                                <div>
+                                    <AvailabilityPill available={product.available} />
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
 
-            {/* MODALS */}
             <CreateProductModal
                 open={showCreateModal}
                 formData={newProduct}

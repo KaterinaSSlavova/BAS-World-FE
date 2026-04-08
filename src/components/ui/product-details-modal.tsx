@@ -1,11 +1,25 @@
 import { CSSProperties, useEffect, useState } from "react";
-import type { Product } from "../../data/mock_data_products";
+
+export type ProductRow = {
+    id: string;
+    sku: string;
+    name: string;
+    brand: string;
+    category: string;
+    price: number;
+    stockQuantity: number;
+    status: string;
+    type: string;
+    depotName: string;
+    available: boolean;
+    description: string;
+};
 
 interface ProductDetailsModalProps {
     open: boolean;
-    product: Product | null;
+    product: ProductRow | null;
     onClose: () => void;
-    onSave: (updatedProduct: Product) => void;
+    onSave: (updatedProduct: ProductRow) => void;
 }
 
 const overlayStyle: CSSProperties = {
@@ -54,6 +68,28 @@ const readOnlyStyle: CSSProperties = {
     cursor: "default",
 };
 
+const textareaStyle: CSSProperties = {
+    width: "100%",
+    minHeight: 96,
+    border: "1px solid #dfe5df",
+    borderRadius: 10,
+    padding: "12px 14px",
+    fontSize: 14,
+    color: "#2d3340",
+    background: "#fff",
+    boxSizing: "border-box",
+    outline: "none",
+    fontFamily: "inherit",
+    resize: "vertical",
+};
+
+const readOnlyTextareaStyle: CSSProperties = {
+    ...textareaStyle,
+    background: "#f8faf8",
+    color: "#667085",
+    cursor: "default",
+};
+
 const labelStyle: CSSProperties = {
     fontSize: 14,
     fontWeight: 600,
@@ -68,7 +104,7 @@ export default function ProductDetailsModal({
                                                 onSave,
                                             }: ProductDetailsModalProps) {
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState<Product | null>(product);
+    const [formData, setFormData] = useState<ProductRow | null>(product);
 
     useEffect(() => {
         setFormData(product);
@@ -77,16 +113,11 @@ export default function ProductDetailsModal({
 
     if (!open || !product || !formData) return null;
 
-    const handleChange = <K extends keyof Product>(field: K, value: Product[K]) => {
+    const handleChange = <K extends keyof ProductRow>(
+        field: K,
+        value: ProductRow[K]
+    ) => {
         setFormData((prev) => (prev ? { ...prev, [field]: value } : prev));
-    };
-
-    const handleDepotChange = (value: string) => {
-        const depots = value
-            .split(",")
-            .map((d) => d.trim())
-            .filter(Boolean);
-        handleChange("depots", depots);
     };
 
     const handleSave = () => {
@@ -157,8 +188,8 @@ export default function ProductDetailsModal({
                     }}
                 >
                     <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>ID</label>
-                        <input value={formData.id} readOnly style={readOnlyStyle} />
+                        <label style={labelStyle}>SKU</label>
+                        <input value={formData.sku} readOnly style={readOnlyStyle} />
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -167,6 +198,16 @@ export default function ProductDetailsModal({
                             value={formData.name}
                             readOnly={!isEditing}
                             onChange={(e) => handleChange("name", e.target.value)}
+                            style={isEditing ? inputStyle : readOnlyStyle}
+                        />
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                        <label style={labelStyle}>Brand</label>
+                        <input
+                            value={formData.brand}
+                            readOnly={!isEditing}
+                            onChange={(e) => handleChange("brand", e.target.value)}
                             style={isEditing ? inputStyle : readOnlyStyle}
                         />
                     </div>
@@ -193,30 +234,16 @@ export default function ProductDetailsModal({
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Stock</label>
+                        <label style={labelStyle}>Stock Quantity</label>
                         <input
                             type="number"
-                            value={formData.stock}
+                            value={formData.stockQuantity}
                             readOnly={!isEditing}
-                            onChange={(e) => handleChange("stock", Number(e.target.value))}
-                            style={isEditing ? inputStyle : readOnlyStyle}
-                        />
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Rule Type</label>
-                        <select
-                            value={formData.ruleType}
-                            disabled={!isEditing}
                             onChange={(e) =>
-                                handleChange("ruleType", e.target.value as Product["ruleType"])
+                                handleChange("stockQuantity", Number(e.target.value))
                             }
                             style={isEditing ? inputStyle : readOnlyStyle}
-                        >
-                            <option value="opt-in">Opt-in</option>
-                            <option value="mandatory">Mandatory</option>
-                            <option value="opt-out">Opt-out</option>
-                        </select>
+                        />
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -224,24 +251,73 @@ export default function ProductDetailsModal({
                         <select
                             value={formData.status}
                             disabled={!isEditing}
-                            onChange={(e) =>
-                                handleChange("status", e.target.value as Product["status"])
-                            }
+                            onChange={(e) => handleChange("status", e.target.value)}
                             style={isEditing ? inputStyle : readOnlyStyle}
                         >
-                            <option value="active">Active</option>
-                            <option value="low_stock">Low Stock</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Archived">Archived</option>
                         </select>
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Depots</label>
+                        <label style={labelStyle}>Type</label>
                         <input
-                            value={formData.depots.join(", ")}
+                            value={formData.type}
                             readOnly={!isEditing}
-                            onChange={(e) => handleDepotChange(e.target.value)}
+                            onChange={(e) => handleChange("type", e.target.value)}
                             style={isEditing ? inputStyle : readOnlyStyle}
+                        />
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                        <label style={labelStyle}>Depot</label>
+                        <input
+                            value={formData.depotName}
+                            readOnly={!isEditing}
+                            onChange={(e) => handleChange("depotName", e.target.value)}
+                            style={isEditing ? inputStyle : readOnlyStyle}
+                        />
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                        <label style={labelStyle}>Availability</label>
+                        <label
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 10,
+                                fontSize: 14,
+                                color: "#2d3340",
+                                height: 46,
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={formData.available}
+                                disabled={!isEditing}
+                                onChange={(e) =>
+                                    handleChange("available", e.target.checked)
+                                }
+                            />
+                            Available
+                        </label>
+                    </div>
+
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gridColumn: "1 / -1",
+                        }}
+                    >
+                        <label style={labelStyle}>Description</label>
+                        <textarea
+                            value={formData.description}
+                            readOnly={!isEditing}
+                            onChange={(e) => handleChange("description", e.target.value)}
+                            style={isEditing ? textareaStyle : readOnlyTextareaStyle}
                         />
                     </div>
                 </div>
