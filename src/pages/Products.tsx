@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { createProduct } from "../lib/api/products";
-import { getAllProductDepots } from "../lib/api/productDepots";
+import {
+    getAllProductDepots,
+    updateProductDepot,
+} from "../lib/api/productDepots";
 import CreateProductModal, {
     type CreateProductFormData,
 } from "../components/ui/create_product_modal";
@@ -8,7 +11,8 @@ import ProductDetailsModal from "../components/ui/product-details-modal";
 import AppLayout from "../components/AppLayout";
 
 type BackendProductDepot = {
-    available: boolean;
+    isAvailable?: boolean;
+    available?: boolean;
     brand: string;
     category: string;
     depotName: string;
@@ -22,8 +26,12 @@ type BackendProductDepot = {
     type: string;
 };
 
-type ProductRow = {
+export type ProductRow = {
     id: string;
+    productId: number;
+    depotId: number;
+    categoryId: number;
+    typeId: number;
     sku: string;
     name: string;
     brand: string;
@@ -40,6 +48,10 @@ type ProductRow = {
 function mapBackendProductToFrontend(item: BackendProductDepot): ProductRow {
     return {
         id: item.sku,
+        productId: item.productId,
+        depotId: 1,
+        categoryId: 1,
+        typeId: 1,
         sku: item.sku,
         name: item.productName,
         brand: item.brand,
@@ -49,8 +61,8 @@ function mapBackendProductToFrontend(item: BackendProductDepot): ProductRow {
         status: item.status,
         type: item.type,
         depotName: item.depotName,
-        available: item.available,
-        description: item.description,
+        available: Boolean(item.isAvailable ?? item.available),
+        description: item.description ?? "",
     };
 }
 
@@ -60,6 +72,17 @@ function formatPrice(value: number) {
         currency: "EUR",
         maximumFractionDigits: 0,
     }).format(value);
+}
+
+function formatStatusLabel(status: string) {
+    const normalized = status.toUpperCase();
+
+    if (normalized === "ACTIVE") return "Active";
+    if (normalized === "INACTIVE") return "Inactive";
+    if (normalized === "DRAFT") return "Draft";
+    if (normalized === "ARCHIVED") return "Archived";
+
+    return status;
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -97,8 +120,8 @@ function StatusPill({ status }: { status: string }) {
                 fontWeight: 700,
             }}
         >
-      {status}
-    </span>
+            {formatStatusLabel(status)}
+        </span>
     );
 }
 
@@ -119,8 +142,8 @@ function AvailabilityPill({ available }: { available: boolean }) {
                 fontWeight: 700,
             }}
         >
-      {available ? "Available" : "Unavailable"}
-    </span>
+            {available ? "Available" : "Unavailable"}
+        </span>
     );
 }
 
@@ -168,7 +191,7 @@ export default function Products() {
             }
         };
 
-        loadProducts();
+        void loadProducts();
     }, []);
 
     const handleProductFormChange = (
@@ -261,10 +284,38 @@ export default function Products() {
         setShowDetailsModal(true);
     };
 
-    const handleSaveEditedProduct = (updatedProduct: ProductRow) => {
-        setProducts((prev) =>
-            prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
-        );
+    const handleSaveEditedProduct = async (updatedProduct: ProductRow) => {
+        try {
+            const payload = {
+                name: updatedProduct.name,
+                description: updatedProduct.description,
+                brand: updatedProduct.brand,
+                price: Number(updatedProduct.price),
+                status: updatedProduct.status,
+                typeId: 1,
+                categoryId: 1,
+                isAvailable: updatedProduct.available,
+                stockQuantity: Number(updatedProduct.stockQuantity),
+            };
+
+            await updateProductDepot(updatedProduct.productId, 1, payload);
+
+            const refreshed: BackendProductDepot[] = await getAllProductDepots();
+            const mapped: ProductRow[] = refreshed.map(mapBackendProductToFrontend);
+            setProducts(mapped);
+
+            const refreshedSelected = mapped.find(
+                (product) => product.productId === updatedProduct.productId
+            );
+
+            if (refreshedSelected) {
+                setSelectedProduct(refreshedSelected);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to update product.");
+            throw err;
+        }
     };
 
     const categories = useMemo(
@@ -392,7 +443,8 @@ export default function Products() {
                     <div
                         style={{
                             display: "grid",
-                            gridTemplateColumns: "1.1fr 2fr 1.5fr 1.3fr 1fr 1.3fr 1.2fr 1.2fr 1.5fr 1.3fr",
+                            gridTemplateColumns:
+                                "1.1fr 2fr 1.5fr 1.3fr 1fr 1.3fr 1.2fr 1.2fr 1.5fr 1.3fr",
                             gap: 16,
                             padding: "20px 22px",
                             borderBottom: "1px solid #eef1f4",

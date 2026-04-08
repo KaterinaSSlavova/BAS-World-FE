@@ -1,25 +1,11 @@
 import { CSSProperties, useEffect, useState } from "react";
-
-export type ProductRow = {
-    id: string;
-    sku: string;
-    name: string;
-    brand: string;
-    category: string;
-    price: number;
-    stockQuantity: number;
-    status: string;
-    type: string;
-    depotName: string;
-    available: boolean;
-    description: string;
-};
+import type { ProductRow } from "../../pages/Products";
 
 interface ProductDetailsModalProps {
     open: boolean;
     product: ProductRow | null;
     onClose: () => void;
-    onSave: (updatedProduct: ProductRow) => void;
+    onSave: (updatedProduct: ProductRow) => Promise<void>;
 }
 
 const overlayStyle: CSSProperties = {
@@ -104,11 +90,13 @@ export default function ProductDetailsModal({
                                                 onSave,
                                             }: ProductDetailsModalProps) {
     const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState<ProductRow | null>(product);
 
     useEffect(() => {
         setFormData(product);
         setIsEditing(false);
+        setIsSaving(false);
     }, [product, open]);
 
     if (!open || !product || !formData) return null;
@@ -120,10 +108,15 @@ export default function ProductDetailsModal({
         setFormData((prev) => (prev ? { ...prev, [field]: value } : prev));
     };
 
-    const handleSave = () => {
-        onSave(formData);
-        setIsEditing(false);
-        onClose();
+    const handleSave = async () => {
+        try {
+            setIsSaving(true);
+            await onSave(formData);
+            setIsEditing(false);
+            onClose();
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -216,9 +209,8 @@ export default function ProductDetailsModal({
                         <label style={labelStyle}>Category</label>
                         <input
                             value={formData.category}
-                            readOnly={!isEditing}
-                            onChange={(e) => handleChange("category", e.target.value)}
-                            style={isEditing ? inputStyle : readOnlyStyle}
+                            readOnly
+                            style={readOnlyStyle}
                         />
                     </div>
 
@@ -254,10 +246,10 @@ export default function ProductDetailsModal({
                             onChange={(e) => handleChange("status", e.target.value)}
                             style={isEditing ? inputStyle : readOnlyStyle}
                         >
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                            <option value="Draft">Draft</option>
-                            <option value="Archived">Archived</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                            <option value="DRAFT">Draft</option>
+                            <option value="ARCHIVED">Archived</option>
                         </select>
                     </div>
 
@@ -265,9 +257,8 @@ export default function ProductDetailsModal({
                         <label style={labelStyle}>Type</label>
                         <input
                             value={formData.type}
-                            readOnly={!isEditing}
-                            onChange={(e) => handleChange("type", e.target.value)}
-                            style={isEditing ? inputStyle : readOnlyStyle}
+                            readOnly
+                            style={readOnlyStyle}
                         />
                     </div>
 
@@ -275,9 +266,8 @@ export default function ProductDetailsModal({
                         <label style={labelStyle}>Depot</label>
                         <input
                             value={formData.depotName}
-                            readOnly={!isEditing}
-                            onChange={(e) => handleChange("depotName", e.target.value)}
-                            style={isEditing ? inputStyle : readOnlyStyle}
+                            readOnly
+                            style={readOnlyStyle}
                         />
                     </div>
 
@@ -333,7 +323,7 @@ export default function ProductDetailsModal({
                 >
                     <button
                         onClick={() => setIsEditing(true)}
-                        disabled={isEditing}
+                        disabled={isEditing || isSaving}
                         style={{
                             padding: "12px 18px",
                             borderRadius: 10,
@@ -342,7 +332,7 @@ export default function ProductDetailsModal({
                             color: isEditing ? "#98a2b3" : "#2d3340",
                             fontSize: 14,
                             fontWeight: 600,
-                            cursor: isEditing ? "not-allowed" : "pointer",
+                            cursor: isEditing || isSaving ? "not-allowed" : "pointer",
                         }}
                     >
                         Edit
@@ -350,19 +340,19 @@ export default function ProductDetailsModal({
 
                     <button
                         onClick={handleSave}
-                        disabled={!isEditing}
+                        disabled={!isEditing || isSaving}
                         style={{
                             padding: "12px 18px",
                             borderRadius: 10,
                             border: "none",
-                            background: !isEditing ? "#b8c2b8" : "#2e9d5b",
+                            background: !isEditing || isSaving ? "#b8c2b8" : "#2e9d5b",
                             color: "#fff",
                             fontSize: 14,
                             fontWeight: 700,
-                            cursor: !isEditing ? "not-allowed" : "pointer",
+                            cursor: !isEditing || isSaving ? "not-allowed" : "pointer",
                         }}
                     >
-                        Save
+                        {isSaving ? "Saving..." : "Save"}
                     </button>
                 </div>
             </div>
