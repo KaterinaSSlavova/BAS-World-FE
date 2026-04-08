@@ -1,6 +1,6 @@
 import { CSSProperties } from "react";
 
-type CreateProductFormData = {
+export type CreateProductFormData = {
     productName: string;
     price: number | "";
     stock: number | "";
@@ -13,9 +13,13 @@ interface CreateProductModalProps {
     open: boolean;
     formData: CreateProductFormData;
     onClose: () => void;
-    onChange: (field: keyof CreateProductFormData, value: string | number) => void;
+    onChange: (
+        field: keyof CreateProductFormData,
+        value: string | number
+    ) => void;
     onSubmit: () => void;
 }
+
 const overlayStyle: CSSProperties = {
     position: "fixed",
     inset: 0,
@@ -125,7 +129,12 @@ export default function CreateProductModal({
                         <input
                             type="number"
                             value={formData.price}
-                            onChange={(e) => onChange("price", Number(e.target.value))}
+                            onChange={(e) =>
+                                onChange(
+                                    "price",
+                                    e.target.value === "" ? "" : Number(e.target.value)
+                                )
+                            }
                             placeholder="100"
                             style={inputStyle}
                         />
@@ -136,7 +145,12 @@ export default function CreateProductModal({
                         <input
                             type="number"
                             value={formData.stock}
-                            onChange={(e) => onChange("stock", Number(e.target.value))}
+                            onChange={(e) =>
+                                onChange(
+                                    "stock",
+                                    e.target.value === "" ? "" : Number(e.target.value)
+                                )
+                            }
                             placeholder="90"
                             style={inputStyle}
                         />

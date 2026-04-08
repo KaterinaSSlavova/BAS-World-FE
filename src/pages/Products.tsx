@@ -1,5 +1,8 @@
 import { useState } from "react";
-import CreateProductModal from "../components/ui/create_product_modal";
+import CreateProductModal, {
+    type CreateProductFormData,
+} from "../components/ui/create_product_modal";
+import ProductDetailsModal from "../components/ui/product-details-modal";
 import AppLayout from "../components/AppLayout";
 import {
     mockProducts,
@@ -11,10 +14,90 @@ import {
 export default function Products() {
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("all");
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
-    const categories: string[] = [...new Set(mockProducts.map((p: Product) => p.category))];
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-    const filtered: Product[] = mockProducts.filter((p: Product) => {
+    const [products, setProducts] = useState<Product[]>(mockProducts);
+
+    const [newProduct, setNewProduct] = useState<CreateProductFormData>({
+        productName: "",
+        price: "",
+        stock: "",
+        ruleType: "",
+        status: "",
+        depot: "",
+    });
+
+    const handleProductFormChange = (
+        field: keyof CreateProductFormData,
+        value: string | number
+    ) => {
+        setNewProduct((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+    };
+
+    const resetForm = () => {
+        setNewProduct({
+            productName: "",
+            price: "",
+            stock: "",
+            ruleType: "",
+            status: "",
+            depot: "",
+        });
+    };
+
+    const handleCreateProduct = () => {
+        const trimmedName = newProduct.productName.trim();
+        const trimmedDepot = newProduct.depot.trim();
+
+        if (!trimmedName || newProduct.price === "" || newProduct.stock === "" || !trimmedDepot) {
+            alert("Please fill in Product Name, Price, Stock, and Depot.");
+            return;
+        }
+
+        const nextIdNumber = products.length + 1;
+        const generatedId = `PRD-${String(nextIdNumber).padStart(3, "0")}`;
+
+        const createdProduct: Product = {
+            id: generatedId,
+            name: trimmedName,
+            category: "Uncategorized",
+            price: Number(newProduct.price),
+            stock: Number(newProduct.stock),
+            ruleType: (newProduct.ruleType || "opt-in") as Product["ruleType"],
+            status: (newProduct.status || "inactive") as Product["status"],
+            depots: [trimmedDepot],
+        };
+
+        setProducts((prev) => [...prev, createdProduct]);
+        setShowCreateModal(false);
+        resetForm();
+    };
+
+    const handleOpenDetails = (product: Product) => {
+        setSelectedProduct(product);
+        setShowDetailsModal(true);
+    };
+
+    const handleSaveEditedProduct = (updatedProduct: Product) => {
+        setProducts((prev) =>
+            prev.map((product) =>
+                product.id === updatedProduct.id ? updatedProduct : product
+            )
+        );
+        setSelectedProduct(updatedProduct);
+    };
+
+    const categories: string[] = [
+        ...new Set(products.map((p: Product) => p.category)),
+    ];
+
+    const filtered: Product[] = products.filter((p: Product) => {
         const matchesSearch =
             p.name.toLowerCase().includes(search.toLowerCase()) ||
             p.id.toLowerCase().includes(search.toLowerCase());
@@ -60,6 +143,7 @@ export default function Products() {
                     </div>
 
                     <button
+                        onClick={() => setShowCreateModal(true)}
                         style={{
                             display: "flex",
                             alignItems: "center",
@@ -221,12 +305,14 @@ export default function Products() {
                         filtered.map((product: Product) => (
                             <div
                                 key={product.id}
+                                onClick={() => handleOpenDetails(product)}
                                 style={{
                                     display: "grid",
                                     gridTemplateColumns: "1fr 2.6fr 1.5fr 1fr 0.8fr 1.3fr 1.2fr 1.6fr",
                                     padding: "24px 22px",
                                     borderBottom: "1px solid #edf1ed",
                                     alignItems: "center",
+                                    cursor: "pointer",
                                 }}
                             >
                                 <div
@@ -303,6 +389,27 @@ export default function Products() {
                     )}
                 </div>
             </div>
+
+            <CreateProductModal
+                open={showCreateModal}
+                formData={newProduct}
+                onClose={() => {
+                    setShowCreateModal(false);
+                    resetForm();
+                }}
+                onChange={handleProductFormChange}
+                onSubmit={handleCreateProduct}
+            />
+
+            <ProductDetailsModal
+                open={showDetailsModal}
+                product={selectedProduct}
+                onClose={() => {
+                    setShowDetailsModal(false);
+                    setSelectedProduct(null);
+                }}
+                onSave={handleSaveEditedProduct}
+            />
         </AppLayout>
     );
 }
