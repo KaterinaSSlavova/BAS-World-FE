@@ -11,19 +11,25 @@ import ProductDetailsModal from "../components/ui/product-details-modal";
 import AppLayout from "../components/AppLayout";
 
 type BackendProductDepot = {
-    isAvailable?: boolean;
-    available?: boolean;
-    brand: string;
-    category: string;
-    depotName: string;
-    description: string;
-    price: number;
     productId: number;
-    productName: string;
     sku: string;
+    productName: string;
+    description: string;
+    brand: string;
+    price: number;
     status: string;
-    stockQuantity: number;
+
     type: string;
+    typeId: number;
+
+    category: string;
+    categoryId: number;
+
+    depotName: string;
+    depotId: number;
+
+    stockQuantity: number;
+    isAvailable: boolean;
 };
 
 export type ProductRow = {
@@ -36,32 +42,41 @@ export type ProductRow = {
     name: string;
     brand: string;
     category: string;
+    type: string;
+    depotName: string;
     price: number;
     stockQuantity: number;
     status: string;
-    type: string;
-    depotName: string;
     available: boolean;
     description: string;
 };
+
+export type SelectOption = {
+    id: number;
+    name: string;
+};
+
+const TYPE_OPTIONS: SelectOption[] = [{ id: 1, name: "Physical Product" }];
+const CATEGORY_OPTIONS: SelectOption[] = [{ id: 1, name: "Tyre" }];
+const DEPOT_OPTIONS: SelectOption[] = [{ id: 1, name: "Eindhoven Depot" }];
 
 function mapBackendProductToFrontend(item: BackendProductDepot): ProductRow {
     return {
         id: item.sku,
         productId: item.productId,
-        depotId: 1,
-        categoryId: 1,
-        typeId: 1,
+        depotId: item.depotId,
+        categoryId: item.categoryId,
+        typeId: item.typeId,
         sku: item.sku,
         name: item.productName,
         brand: item.brand,
         category: item.category,
+        type: item.type,
+        depotName: item.depotName,
         price: Number(item.price),
         stockQuantity: Number(item.stockQuantity),
         status: item.status,
-        type: item.type,
-        depotName: item.depotName,
-        available: Boolean(item.isAvailable ?? item.available),
+        available: Boolean(item.isAvailable),
         description: item.description ?? "",
     };
 }
@@ -179,8 +194,8 @@ export default function Products() {
                 setLoading(true);
                 setError("");
 
-                const data = await getAllProductDepots();
-                const mapped = data.map(mapBackendProductToFrontend);
+                const data: BackendProductDepot[] = await getAllProductDepots();
+                const mapped: ProductRow[] = data.map(mapBackendProductToFrontend);
 
                 setProducts(mapped);
             } catch (err) {
@@ -268,7 +283,7 @@ export default function Products() {
 
             await createProduct(payload);
 
-            const data = await getAllProductDepots();
+            const data: BackendProductDepot[] = await getAllProductDepots();
             setProducts(data.map(mapBackendProductToFrontend));
 
             setShowCreateModal(false);
@@ -292,20 +307,27 @@ export default function Products() {
                 brand: updatedProduct.brand,
                 price: Number(updatedProduct.price),
                 status: updatedProduct.status,
-                typeId: 1,
-                categoryId: 1,
+                typeId: Number(updatedProduct.typeId),
+                categoryId: Number(updatedProduct.categoryId),
+                depotId: Number(updatedProduct.depotId),
                 isAvailable: updatedProduct.available,
                 stockQuantity: Number(updatedProduct.stockQuantity),
             };
 
-            await updateProductDepot(updatedProduct.productId, 1, payload);
+            await updateProductDepot(
+                updatedProduct.productId,
+                updatedProduct.depotId,
+                payload
+            );
 
             const refreshed: BackendProductDepot[] = await getAllProductDepots();
             const mapped: ProductRow[] = refreshed.map(mapBackendProductToFrontend);
             setProducts(mapped);
 
             const refreshedSelected = mapped.find(
-                (product) => product.productId === updatedProduct.productId
+                (product) =>
+                    product.productId === updatedProduct.productId &&
+                    product.depotId === updatedProduct.depotId
             );
 
             if (refreshedSelected) {
@@ -454,6 +476,8 @@ export default function Products() {
                             color: "#7b8494",
                             textTransform: "uppercase",
                             letterSpacing: "0.08em",
+                            alignItems: "center",
+                            justifyItems: "center",
                         }}
                     >
                         <div>SKU</div>
@@ -490,6 +514,7 @@ export default function Products() {
                                     borderBottom: "1px solid #eef1f4",
                                     cursor: "pointer",
                                     alignItems: "center",
+                                    justifyItems: "center",
                                 }}
                             >
                                 <div
@@ -503,7 +528,7 @@ export default function Products() {
                                     {product.sku}
                                 </div>
 
-                                <div>
+                                <div style={{ justifySelf: "start", width: "100%" }}>
                                     <div
                                         style={{
                                             fontSize: 18,
@@ -605,6 +630,9 @@ export default function Products() {
                 product={selectedProduct}
                 onClose={() => setShowDetailsModal(false)}
                 onSave={handleSaveEditedProduct}
+                typeOptions={TYPE_OPTIONS}
+                categoryOptions={CATEGORY_OPTIONS}
+                depotOptions={DEPOT_OPTIONS}
             />
         </AppLayout>
     );

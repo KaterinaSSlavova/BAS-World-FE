@@ -33,21 +33,24 @@ const overlayStyle: CSSProperties = {
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1000,
-    padding: 24,
+    padding: 16,
 };
 
 const modalStyle: CSSProperties = {
     width: "100%",
-    maxWidth: 820,
+    maxWidth: 720,
+    maxHeight: "90vh",
     background: "#fff",
     borderRadius: 16,
     boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
     border: "1px solid #e5ebe5",
     overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
 };
 
 const sectionStyle: CSSProperties = {
-    padding: 28,
+    padding: 20,
 };
 
 const inputStyle: CSSProperties = {
@@ -102,6 +105,7 @@ export default function CreateProductModal({
                     style={{
                         ...sectionStyle,
                         borderBottom: "1px solid #edf1ed",
+                        flexShrink: 0,
                     }}
                 >
                     <h2
@@ -131,6 +135,8 @@ export default function CreateProductModal({
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",
                         gap: 18,
+                        overflowY: "auto",
+                        flex: 1,
                     }}
                 >
                     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -206,10 +212,10 @@ export default function CreateProductModal({
                             style={inputStyle}
                         >
                             <option value="">Select status</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                            <option value="Draft">Draft</option>
-                            <option value="Archived">Archived</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                            <option value="DRAFT">Draft</option>
+                            <option value="ARCHIVED">Archived</option>
                         </select>
                     </div>
 
@@ -264,7 +270,13 @@ export default function CreateProductModal({
                         </select>
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                        }}
+                    >
                         <label style={labelStyle}>Availability</label>
                         <label
                             style={{
@@ -303,11 +315,12 @@ export default function CreateProductModal({
 
                 <div
                     style={{
-                        padding: "20px 28px",
+                        padding: "16px 20px",
                         borderTop: "1px solid #edf1ed",
                         display: "flex",
                         justifyContent: "flex-end",
                         gap: 12,
+                        flexShrink: 0,
                     }}
                 >
                     <button

@@ -1,11 +1,14 @@
 import { CSSProperties, useEffect, useState } from "react";
-import type { ProductRow } from "../../pages/Products";
+import type { ProductRow, SelectOption } from "../../pages/Products";
 
 interface ProductDetailsModalProps {
     open: boolean;
     product: ProductRow | null;
     onClose: () => void;
     onSave: (updatedProduct: ProductRow) => Promise<void>;
+    typeOptions: SelectOption[];
+    categoryOptions: SelectOption[];
+    depotOptions: SelectOption[];
 }
 
 const overlayStyle: CSSProperties = {
@@ -16,21 +19,24 @@ const overlayStyle: CSSProperties = {
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1100,
-    padding: 24,
+    padding: 16,
 };
 
 const modalStyle: CSSProperties = {
     width: "100%",
-    maxWidth: 860,
+    maxWidth: 720,
+    maxHeight: "90vh",
     background: "#fff",
     borderRadius: 16,
     boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
     border: "1px solid #e5ebe5",
     overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
 };
 
 const sectionStyle: CSSProperties = {
-    padding: 28,
+    padding: 20,
 };
 
 const inputStyle: CSSProperties = {
@@ -88,6 +94,9 @@ export default function ProductDetailsModal({
                                                 product,
                                                 onClose,
                                                 onSave,
+                                                typeOptions,
+                                                categoryOptions,
+                                                depotOptions,
                                             }: ProductDetailsModalProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -106,6 +115,51 @@ export default function ProductDetailsModal({
         value: ProductRow[K]
     ) => {
         setFormData((prev) => (prev ? { ...prev, [field]: value } : prev));
+    };
+
+    const handleTypeChange = (newTypeId: number) => {
+        const selected = typeOptions.find((option) => option.id === newTypeId);
+        if (!selected) return;
+
+        setFormData((prev) =>
+            prev
+                ? {
+                    ...prev,
+                    typeId: selected.id,
+                    type: selected.name,
+                }
+                : prev
+        );
+    };
+
+    const handleCategoryChange = (newCategoryId: number) => {
+        const selected = categoryOptions.find((option) => option.id === newCategoryId);
+        if (!selected) return;
+
+        setFormData((prev) =>
+            prev
+                ? {
+                    ...prev,
+                    categoryId: selected.id,
+                    category: selected.name,
+                }
+                : prev
+        );
+    };
+
+    const handleDepotChange = (newDepotId: number) => {
+        const selected = depotOptions.find((option) => option.id === newDepotId);
+        if (!selected) return;
+
+        setFormData((prev) =>
+            prev
+                ? {
+                    ...prev,
+                    depotId: selected.id,
+                    depotName: selected.name,
+                }
+                : prev
+        );
     };
 
     const handleSave = async () => {
@@ -130,6 +184,7 @@ export default function ProductDetailsModal({
                         alignItems: "flex-start",
                         justifyContent: "space-between",
                         gap: 16,
+                        flexShrink: 0,
                     }}
                 >
                     <div>
@@ -166,6 +221,7 @@ export default function ProductDetailsModal({
                             fontSize: 18,
                             lineHeight: 1,
                             cursor: "pointer",
+                            flexShrink: 0,
                         }}
                     >
                         ×
@@ -178,6 +234,8 @@ export default function ProductDetailsModal({
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",
                         gap: 18,
+                        overflowY: "auto",
+                        flex: 1,
                     }}
                 >
                     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -207,11 +265,21 @@ export default function ProductDetailsModal({
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
                         <label style={labelStyle}>Category</label>
-                        <input
-                            value={formData.category}
-                            readOnly
-                            style={readOnlyStyle}
-                        />
+                        {isEditing ? (
+                            <select
+                                value={formData.categoryId}
+                                onChange={(e) => handleCategoryChange(Number(e.target.value))}
+                                style={inputStyle}
+                            >
+                                {categoryOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.name}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input value={formData.category} readOnly style={readOnlyStyle} />
+                        )}
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -255,20 +323,40 @@ export default function ProductDetailsModal({
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
                         <label style={labelStyle}>Type</label>
-                        <input
-                            value={formData.type}
-                            readOnly
-                            style={readOnlyStyle}
-                        />
+                        {isEditing ? (
+                            <select
+                                value={formData.typeId}
+                                onChange={(e) => handleTypeChange(Number(e.target.value))}
+                                style={inputStyle}
+                            >
+                                {typeOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.name}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input value={formData.type} readOnly style={readOnlyStyle} />
+                        )}
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
                         <label style={labelStyle}>Depot</label>
-                        <input
-                            value={formData.depotName}
-                            readOnly
-                            style={readOnlyStyle}
-                        />
+                        {isEditing ? (
+                            <select
+                                value={formData.depotId}
+                                onChange={(e) => handleDepotChange(Number(e.target.value))}
+                                style={inputStyle}
+                            >
+                                {depotOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.name}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input value={formData.depotName} readOnly style={readOnlyStyle} />
+                        )}
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -314,11 +402,12 @@ export default function ProductDetailsModal({
 
                 <div
                     style={{
-                        padding: "20px 28px",
+                        padding: "16px 20px",
                         borderTop: "1px solid #edf1ed",
                         display: "flex",
                         justifyContent: "flex-end",
                         gap: 12,
+                        flexShrink: 0,
                     }}
                 >
                     <button
