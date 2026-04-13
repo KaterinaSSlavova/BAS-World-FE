@@ -11,7 +11,7 @@ export type CreateProductFormData = {
     categoryId: number | "";
     depotId: number | "";
     stockQuantity: number | "";
-    isAvailable: boolean;
+    available: boolean;
 };
 
 interface CreateProductModalProps {
@@ -212,10 +212,10 @@ export default function CreateProductModal({
                             style={inputStyle}
                         >
                             <option value="">Select status</option>
-                            <option value="ACTIVE">Active</option>
-                            <option value="INACTIVE">Inactive</option>
-                            <option value="DRAFT">Draft</option>
-                            <option value="ARCHIVED">Archived</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Archived">Archived</option>
                         </select>
                     </div>
 
@@ -289,8 +289,8 @@ export default function CreateProductModal({
                         >
                             <input
                                 type="checkbox"
-                                checked={formData.isAvailable}
-                                onChange={(e) => onChange("isAvailable", e.target.checked)}
+                                checked={formData.available}
+                                onChange={(e) => onChange("available", e.target.checked)}
                             />
                             Available
                         </label>

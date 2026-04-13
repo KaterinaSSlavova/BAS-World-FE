@@ -29,7 +29,7 @@ type BackendProductDepot = {
     depotId: number;
 
     stockQuantity: number;
-    isAvailable: boolean;
+    available: boolean;
 };
 
 export type ProductRow = {
@@ -76,7 +76,7 @@ function mapBackendProductToFrontend(item: BackendProductDepot): ProductRow {
         price: Number(item.price),
         stockQuantity: Number(item.stockQuantity),
         status: item.status,
-        available: Boolean(item.isAvailable),
+        available: Boolean(item.available),
         description: item.description ?? "",
     };
 }
@@ -185,7 +185,7 @@ export default function Products() {
         categoryId: 1,
         depotId: 1,
         stockQuantity: "",
-        isAvailable: true,
+        available: true,
     });
 
     useEffect(() => {
@@ -231,7 +231,7 @@ export default function Products() {
             categoryId: 1,
             depotId: 1,
             stockQuantity: "",
-            isAvailable: true,
+            available: true,
         });
     };
 
@@ -247,7 +247,7 @@ export default function Products() {
             categoryId,
             depotId,
             stockQuantity,
-            isAvailable,
+            available,
         } = newProduct;
 
         if (
@@ -278,7 +278,7 @@ export default function Products() {
                 categoryId: Number(categoryId),
                 depotId: Number(depotId),
                 stockQuantity: Number(stockQuantity),
-                isAvailable,
+                available,
             };
 
             await createProduct(payload);
@@ -310,7 +310,7 @@ export default function Products() {
                 typeId: Number(updatedProduct.typeId),
                 categoryId: Number(updatedProduct.categoryId),
                 depotId: Number(updatedProduct.depotId),
-                isAvailable: updatedProduct.available,
+                available: updatedProduct.available,
                 stockQuantity: Number(updatedProduct.stockQuantity),
             };
 
