@@ -11,3 +11,8 @@ export const getDepotById = async (id: number) => {
     const response = await api.get(`/depots/${id}`);
     return response.data;
 };
+
+export const getDepotOverview = async () => {
+    const response = await api.get("/depots");
+    return response.data;
+};
