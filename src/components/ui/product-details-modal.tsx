@@ -314,10 +314,10 @@ export default function ProductDetailsModal({
                             onChange={(e) => handleChange("status", e.target.value)}
                             style={isEditing ? inputStyle : readOnlyStyle}
                         >
-                            <option value="ACTIVE">Active</option>
-                            <option value="INACTIVE">Inactive</option>
-                            <option value="DRAFT">Draft</option>
-                            <option value="ARCHIVED">Archived</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Archived">Archived</option>
                         </select>
                     </div>
 
