@@ -17,19 +17,14 @@ export default function Sidebar() {
         return window.innerWidth <= 768;
     });
 
-    const [isOpen, setIsOpen] = useState(() => {
-        if (typeof window === "undefined") return true;
-        return window.innerWidth > 768;
-    });
+    const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
             const mobile = window.innerWidth <= 768;
             setIsMobile(mobile);
 
-            if (!mobile) {
-                setIsOpen(true);
-            } else {
+            if (mobile) {
                 setIsOpen(false);
             }
         };
@@ -96,8 +91,11 @@ export default function Sidebar() {
                     left: 0,
                     height: isMobile ? "100vh" : "auto",
                     zIndex: 1101,
-                    transform:
-                        isMobile && !isOpen ? "translateX(-100%)" : "translateX(0)",
+                    transform: isMobile
+                        ? isOpen
+                            ? "translateX(0)"
+                            : "translateX(-100%)"
+                        : "translateX(0)",
                     transition: "transform 0.25s ease",
                     boxShadow: isMobile
                         ? "0 10px 30px rgba(0,0,0,0.12)"
