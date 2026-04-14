@@ -232,7 +232,10 @@ export default function CreateProductModal({
                             style={inputStyle}
                         >
                             <option value="">Select type</option>
-                            <option value={1}>Physical Product</option>
+                            <option value={1}>OEM</option>
+                            <option value={2}>Aftermarket</option>
+                            <option value={3}>Performance</option>
+                            <option value={4}>Refurbished</option>
                         </select>
                     </div>
 
@@ -250,6 +253,9 @@ export default function CreateProductModal({
                         >
                             <option value="">Select category</option>
                             <option value={1}>Tyre</option>
+                            <option value={2}>Suspension</option>
+                            <option value={3}>Body</option>
+                            <option value={4}>Engine</option>
                         </select>
                     </div>
 

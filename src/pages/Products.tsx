@@ -174,6 +174,11 @@ export default function Products() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const [isMobile, setIsMobile] = useState(() => {
+        if (typeof window === "undefined") return false;
+        return window.innerWidth <= 768;
+    });
+
     const [newProduct, setNewProduct] = useState<CreateProductFormData>({
         sku: "",
         name: "",
@@ -187,6 +192,15 @@ export default function Products() {
         stockQuantity: "",
         available: true,
     });
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     useEffect(() => {
         const loadProducts = async () => {
@@ -365,8 +379,9 @@ export default function Products() {
                 <div
                     style={{
                         display: "flex",
+                        flexDirection: isMobile ? "column" : "row",
                         justifyContent: "space-between",
-                        alignItems: "flex-start",
+                        alignItems: isMobile ? "stretch" : "flex-start",
                         gap: 16,
                     }}
                 >
@@ -374,7 +389,7 @@ export default function Products() {
                         <h1
                             style={{
                                 margin: 0,
-                                fontSize: 28,
+                                fontSize: isMobile ? 24 : 28,
                                 fontWeight: 800,
                                 color: "#1f2937",
                             }}
@@ -385,7 +400,7 @@ export default function Products() {
                             style={{
                                 margin: "8px 0 0",
                                 color: "#7f8792",
-                                fontSize: 16,
+                                fontSize: isMobile ? 15 : 16,
                             }}
                         >
                             Manage cross-sell products and services
@@ -404,20 +419,29 @@ export default function Products() {
                             fontSize: 16,
                             cursor: "pointer",
                             boxShadow: "0 4px 12px rgba(46,157,91,0.18)",
+                            width: isMobile ? "100%" : "auto",
                         }}
                     >
                         + Add Product
                     </button>
                 </div>
 
-                <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: isMobile ? "column" : "row",
+                        gap: 16,
+                        flexWrap: "wrap",
+                    }}
+                >
                     <input
                         placeholder="Search products..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         style={{
                             flex: 1,
-                            minWidth: 280,
+                            minWidth: isMobile ? "100%" : 280,
+                            width: isMobile ? "100%" : "auto",
                             height: 52,
                             borderRadius: 12,
                             border: "1px solid #d9dee5",
@@ -434,7 +458,7 @@ export default function Products() {
                         value={categoryFilter}
                         onChange={(e) => setCategoryFilter(e.target.value)}
                         style={{
-                            width: 260,
+                            width: isMobile ? "100%" : 260,
                             height: 52,
                             borderRadius: 12,
                             border: "1px solid #d9dee5",
@@ -443,6 +467,7 @@ export default function Products() {
                             background: "#fff",
                             color: "#2d3340",
                             outline: "none",
+                            boxSizing: "border-box",
                         }}
                     >
                         <option value="all">All Categories</option>
@@ -462,36 +487,6 @@ export default function Products() {
                         overflow: "hidden",
                     }}
                 >
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                                "1.1fr 2fr 1.5fr 1.3fr 1fr 1.3fr 1.2fr 1.2fr 1.5fr 1.3fr",
-                            gap: 16,
-                            padding: "20px 22px",
-                            borderBottom: "1px solid #eef1f4",
-                            background: "#fbfcfd",
-                            fontSize: 12,
-                            fontWeight: 800,
-                            color: "#7b8494",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.08em",
-                            alignItems: "center",
-                            justifyItems: "center",
-                        }}
-                    >
-                        <div>SKU</div>
-                        <div>Product</div>
-                        <div>Brand</div>
-                        <div>Category</div>
-                        <div>Price</div>
-                        <div>Stock</div>
-                        <div>Status</div>
-                        <div>Type</div>
-                        <div>Depot</div>
-                        <div>Availability</div>
-                    </div>
-
                     {loading ? (
                         <div style={{ padding: 24, color: "#7f8792" }}>Loading...</div>
                     ) : error ? (
@@ -500,116 +495,354 @@ export default function Products() {
                         <div style={{ padding: 24, color: "#7f8792" }}>
                             No products found.
                         </div>
+                    ) : isMobile ? (
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 12,
+                                padding: 12,
+                            }}
+                        >
+                            {filtered.map((product) => (
+                                <div
+                                    key={`${product.productId}-${product.depotId}`}
+                                    onClick={() => handleOpenDetails(product)}
+                                    style={{
+                                        border: "1px solid #eef1f4",
+                                        borderRadius: 16,
+                                        padding: 16,
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 12,
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "flex-start",
+                                            gap: 12,
+                                            flexWrap: "wrap",
+                                        }}
+                                    >
+                                        <div style={{ minWidth: 0, flex: 1 }}>
+                                            <div
+                                                style={{
+                                                    fontSize: 18,
+                                                    fontWeight: 700,
+                                                    color: "#273142",
+                                                    lineHeight: 1.35,
+                                                    wordBreak: "break-word",
+                                                }}
+                                            >
+                                                {product.name}
+                                            </div>
+                                            <div
+                                                style={{
+                                                    fontSize: 14,
+                                                    color: "#7b8494",
+                                                    fontWeight: 600,
+                                                    marginTop: 4,
+                                                    wordBreak: "break-word",
+                                                }}
+                                            >
+                                                SKU: {product.sku}
+                                            </div>
+                                        </div>
+
+                                        <StatusPill status={product.status} />
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            display: "grid",
+                                            gridTemplateColumns: "1fr 1fr",
+                                            gap: 12,
+                                        }}
+                                    >
+                                        <div>
+                                            <div
+                                                style={{
+                                                    fontSize: 12,
+                                                    color: "#7b8494",
+                                                    fontWeight: 700,
+                                                    marginBottom: 4,
+                                                }}
+                                            >
+                                                Brand
+                                            </div>
+                                            <div
+                                                style={{
+                                                    fontSize: 15,
+                                                    color: "#273142",
+                                                    wordBreak: "break-word",
+                                                }}
+                                            >
+                                                {product.brand}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div
+                                                style={{
+                                                    fontSize: 12,
+                                                    color: "#7b8494",
+                                                    fontWeight: 700,
+                                                    marginBottom: 4,
+                                                }}
+                                            >
+                                                Category
+                                            </div>
+                                            <div
+                                                style={{
+                                                    fontSize: 15,
+                                                    color: "#273142",
+                                                    wordBreak: "break-word",
+                                                }}
+                                            >
+                                                {product.category}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div
+                                                style={{
+                                                    fontSize: 12,
+                                                    color: "#7b8494",
+                                                    fontWeight: 700,
+                                                    marginBottom: 4,
+                                                }}
+                                            >
+                                                Price
+                                            </div>
+                                            <div
+                                                style={{
+                                                    fontSize: 15,
+                                                    color: "#273142",
+                                                    fontWeight: 600,
+                                                }}
+                                            >
+                                                {formatPrice(product.price)}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div
+                                                style={{
+                                                    fontSize: 12,
+                                                    color: "#7b8494",
+                                                    fontWeight: 700,
+                                                    marginBottom: 4,
+                                                }}
+                                            >
+                                                Stock
+                                            </div>
+                                            <div
+                                                style={{
+                                                    fontSize: 15,
+                                                    color: "#273142",
+                                                    fontWeight: 600,
+                                                }}
+                                            >
+                                                {product.stockQuantity}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div
+                                                style={{
+                                                    fontSize: 12,
+                                                    color: "#7b8494",
+                                                    fontWeight: 700,
+                                                    marginBottom: 4,
+                                                }}
+                                            >
+                                                Type
+                                            </div>
+                                            <div
+                                                style={{
+                                                    fontSize: 15,
+                                                    color: "#273142",
+                                                    wordBreak: "break-word",
+                                                }}
+                                            >
+                                                {product.type}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div
+                                                style={{
+                                                    fontSize: 12,
+                                                    color: "#7b8494",
+                                                    fontWeight: 700,
+                                                    marginBottom: 4,
+                                                }}
+                                            >
+                                                Depot
+                                            </div>
+                                            <div
+                                                style={{
+                                                    fontSize: 15,
+                                                    color: "#273142",
+                                                    wordBreak: "break-word",
+                                                }}
+                                            >
+                                                {product.depotName}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <AvailabilityPill available={product.available} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     ) : (
-                        filtered.map((product) => (
+                        <>
                             <div
-                                key={product.id}
-                                onClick={() => handleOpenDetails(product)}
                                 style={{
                                     display: "grid",
                                     gridTemplateColumns:
                                         "1.1fr 2fr 1.5fr 1.3fr 1fr 1.3fr 1.2fr 1.2fr 1.5fr 1.3fr",
                                     gap: 16,
-                                    padding: "22px",
+                                    padding: "20px 22px",
                                     borderBottom: "1px solid #eef1f4",
-                                    cursor: "pointer",
+                                    background: "#fbfcfd",
+                                    fontSize: 12,
+                                    fontWeight: 800,
+                                    color: "#7b8494",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.08em",
                                     alignItems: "center",
                                     justifyItems: "center",
                                 }}
                             >
+                                <div>SKU</div>
+                                <div>Product</div>
+                                <div>Brand</div>
+                                <div>Category</div>
+                                <div>Price</div>
+                                <div>Stock</div>
+                                <div>Status</div>
+                                <div>Type</div>
+                                <div>Depot</div>
+                                <div>Availability</div>
+                            </div>
+
+                            {filtered.map((product) => (
                                 <div
+                                    key={`${product.productId}-${product.depotId}`}
+                                    onClick={() => handleOpenDetails(product)}
                                     style={{
-                                        fontSize: 16,
-                                        color: "#7b8494",
-                                        lineHeight: 1.4,
-                                        fontWeight: 600,
+                                        display: "grid",
+                                        gridTemplateColumns:
+                                            "1.1fr 2fr 1.5fr 1.3fr 1fr 1.3fr 1.2fr 1.2fr 1.5fr 1.3fr",
+                                        gap: 16,
+                                        padding: "22px",
+                                        borderBottom: "1px solid #eef1f4",
+                                        cursor: "pointer",
+                                        alignItems: "center",
+                                        justifyItems: "center",
                                     }}
                                 >
-                                    {product.sku}
-                                </div>
-
-                                <div style={{ justifySelf: "start", width: "100%" }}>
                                     <div
                                         style={{
-                                            fontSize: 18,
-                                            fontWeight: 700,
-                                            color: "#273142",
-                                            lineHeight: 1.35,
+                                            fontSize: 16,
+                                            color: "#7b8494",
+                                            lineHeight: 1.4,
+                                            fontWeight: 600,
                                         }}
                                     >
-                                        {product.name}
+                                        {product.sku}
+                                    </div>
+
+                                    <div style={{ justifySelf: "start", width: "100%" }}>
+                                        <div
+                                            style={{
+                                                fontSize: 18,
+                                                fontWeight: 700,
+                                                color: "#273142",
+                                                lineHeight: 1.35,
+                                            }}
+                                        >
+                                            {product.name}
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            fontSize: 16,
+                                            color: "#6b7280",
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        {product.brand}
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            fontSize: 16,
+                                            color: "#6b7280",
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        {product.category}
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            fontSize: 16,
+                                            color: "#273142",
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        {formatPrice(product.price)}
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            fontSize: 16,
+                                            color: "#273142",
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        {product.stockQuantity}
+                                    </div>
+
+                                    <div>
+                                        <StatusPill status={product.status} />
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            fontSize: 15,
+                                            color: "#6b7280",
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        {product.type}
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            fontSize: 15,
+                                            color: "#6b7280",
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        {product.depotName}
+                                    </div>
+
+                                    <div>
+                                        <AvailabilityPill available={product.available} />
                                     </div>
                                 </div>
-
-                                <div
-                                    style={{
-                                        fontSize: 16,
-                                        color: "#6b7280",
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    {product.brand}
-                                </div>
-
-                                <div
-                                    style={{
-                                        fontSize: 16,
-                                        color: "#6b7280",
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    {product.category}
-                                </div>
-
-                                <div
-                                    style={{
-                                        fontSize: 16,
-                                        color: "#273142",
-                                        fontWeight: 600,
-                                    }}
-                                >
-                                    {formatPrice(product.price)}
-                                </div>
-
-                                <div
-                                    style={{
-                                        fontSize: 16,
-                                        color: "#273142",
-                                        fontWeight: 600,
-                                    }}
-                                >
-                                    {product.stockQuantity}
-                                </div>
-
-                                <div>
-                                    <StatusPill status={product.status} />
-                                </div>
-
-                                <div
-                                    style={{
-                                        fontSize: 15,
-                                        color: "#6b7280",
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    {product.type}
-                                </div>
-
-                                <div
-                                    style={{
-                                        fontSize: 15,
-                                        color: "#6b7280",
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    {product.depotName}
-                                </div>
-
-                                <div>
-                                    <AvailabilityPill available={product.available} />
-                                </div>
-                            </div>
-                        ))
+                            ))}
+                        </>
                     )}
                 </div>
             </div>
