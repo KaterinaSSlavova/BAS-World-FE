@@ -101,7 +101,7 @@ export default function Dashboard() {
             {/* Stat Cards */}
             <div style={{
                 display: "grid",
-                gridTemplateColumns: "1fr", // 👈 stack all
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
                 gap: 16,
                 marginBottom: 28,
             }}>
