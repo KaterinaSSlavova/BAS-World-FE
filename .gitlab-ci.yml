@@ -1,10 +1,18 @@
 stages:
   - build
   - test
-  - sonarqube-check
+  - trigger_deploy
 
 build:
   stage: build
   script:
     - npm ci
     - npm run build
+
+trigger_deploy:
+  stage: trigger_deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  trigger:
+    project: projects/group-infra
+    branch: main
