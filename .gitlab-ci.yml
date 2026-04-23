@@ -1,6 +1,7 @@
 stages:
   - build
   - test
+  - package
   - trigger_deploy
 
 build:
@@ -9,10 +10,17 @@ build:
     - npm ci
     - npm run build
 
+package:
+  stage: package
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script:
+    - docker build -t bas-world-fe:latest .
+
 trigger_deploy:
   stage: trigger_deploy
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   trigger:
-    project: projects/group-infra
+    project: s3-cb/spring-26/fsd1-basworld/group-project-3/bas-world-group-3-infra
     branch: main
