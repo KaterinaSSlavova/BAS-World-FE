@@ -4,6 +4,8 @@ import "./App.css";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import logo from "./assets/basworld-logo.png";
+import Brands from "./pages/Brands.jsx";
+import Depots from "./pages/Depots.jsx";
 
 function LandingPage() {
     return (
@@ -42,6 +44,8 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/products" element={<Products />} />
+                <Route path="/depots" element={<Depots />} />
+                <Route path="/brands" element={<Brands />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>

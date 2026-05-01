@@ -79,12 +79,12 @@ export default function Depots() {
                                 fontSize: 16,
                             }}
                         >
-                            Manage depot locations and logistics hubs
+                            Manage depot locations and storage hubs
                         </p>
                     </div>
 
                     <button
-                        onClick={() => console.log("add depot")}
+                        onClick={() => console.log("open create depot")}
                         style={{
                             background: "#2e9d5b",
                             color: "#fff",
@@ -102,7 +102,7 @@ export default function Depots() {
                     </button>
                 </div>
 
-                {/* Cards */}
+                {/* Depot Grid */}
                 <div
                     style={{
                         display: "grid",
@@ -117,8 +117,10 @@ export default function Depots() {
                             depot={depot}
                             expanded={expandedDepot === depot.id}
                             onToggle={() =>
-                                setExpandedDepot((prev) =>
-                                    prev === depot.id ? null : depot.id
+                                setExpandedDepot(
+                                    expandedDepot === depot.id
+                                        ? null
+                                        : depot.id
                                 )
                             }
                             onEdit={handleEdit}

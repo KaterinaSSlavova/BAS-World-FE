@@ -6,6 +6,7 @@ const navItems = [
     { label: "Dashboard", icon: "⊞", path: "/dashboard" },
     { label: "Products", icon: "◈", path: "/products" },
     { label: "Depots", icon: "▦", path: "/depots" },
+    { label: "Brands", icon: "▦", path: "/brands" },
     { label: "Business Rules", icon: "⟳", path: "/business-rules" },
     { label: "Stock Alerts", icon: "△", path: "/stock-alerts" },
     { label: "Analytics", icon: "⌇", path: "/analytics" },
