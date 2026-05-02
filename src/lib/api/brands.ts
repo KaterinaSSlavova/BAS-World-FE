@@ -5,13 +5,13 @@ export const getAllBrands = async () => {
     return response.data;
 };
 
-export const createBrand = async (data: any) => {
-    const response = await api.post("/brands", data);
+export const createBrand = async (name: string, pictureUrl?: string) => {
+    const response = await api.post("/brands", { name, pictureUrl });
     return response.data;
 };
 
-export const updateBrand = async (id: number, data: any) => {
-    const response = await api.put(`/brands/${id}`, data);
+export const updateBrand = async (id: number, name: string, pictureUrl?: string) => {
+    const response = await api.put(`/brands/${id}`, { name, pictureUrl });
     return response.data;
 };
 
