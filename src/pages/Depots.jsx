@@ -1,44 +1,81 @@
 import { useState } from "react";
 import AppLayout from "../components/AppLayout";
 import DepotCard from "../components/depots/DepotCard";
+import DepotPanel from "../components/depots/DepotPanel";
+
+// --- Mock data matching your real domain model ---
+// Replace with your actual API calls / props
 
 const DEPOTS = [
     {
         id: 1,
-        name: "Eindhoven Central",
-        city: "Eindhoven",
-        country: "Netherlands",
+        depotName: "Eindhoven Central",
+        location: "Eindhoven",
+        archived: false,
         flag: "🇳🇱",
         color: "linear-gradient(90deg,#ae1c28,#fff,#21468b)",
     },
     {
         id: 2,
-        name: "Berlin Hub",
-        city: "Berlin",
-        country: "Germany",
+        depotName: "Berlin Hub",
+        location: "Berlin",
+        archived: false,
         flag: "🇩🇪",
         color: "linear-gradient(90deg,#000,#dd0000,#ffce00)",
     },
     {
         id: 3,
-        name: "Paris South",
-        city: "Paris",
-        country: "France",
+        depotName: "Paris South",
+        location: "Paris",
+        archived: false,
         flag: "🇫🇷",
         color: "linear-gradient(90deg,#0055a4,#fff,#ef4135)",
     },
     {
         id: 4,
-        name: "Madrid Logistics",
-        city: "Madrid",
-        country: "Spain",
+        depotName: "Madrid Logistics",
+        location: "Madrid",
+        archived: false,
         flag: "🇪🇸",
         color: "linear-gradient(90deg,#aa151b,#f1bf00)",
     },
 ];
 
+// ProductDepot entries keyed by depot id
+// Each entry matches: { product, depot, isAvailable, stockQuantity }
+const PRODUCT_DEPOTS = {
+    1: [
+        { product: { id: 1, name: "Hydraulic pump A4" },   isAvailable: true,  stockQuantity: 480 },
+        { product: { id: 2, name: "Control valve V2" },     isAvailable: true,  stockQuantity: 360 },
+        { product: { id: 3, name: "Filter housing FH7" },   isAvailable: true,  stockQuantity: 600 },
+        { product: { id: 4, name: "Pressure sensor P9" },   isAvailable: false, stockQuantity: 0   },
+        { product: { id: 5, name: "Mounting bracket MB3" }, isAvailable: true,  stockQuantity: 270 },
+        { product: { id: 6, name: "Seal kit SK12" },        isAvailable: false, stockQuantity: 0   },
+        { product: { id: 7, name: "Flow meter FM5" },       isAvailable: true,  stockQuantity: 210 },
+    ],
+    2: [
+        { product: { id: 1, name: "Hydraulic pump A4" },   isAvailable: true, stockQuantity: 1200 },
+        { product: { id: 3, name: "Filter housing FH7" },   isAvailable: true, stockQuantity: 840  },
+    ],
+    3: [
+        { product: { id: 2, name: "Control valve V2" },     isAvailable: false, stockQuantity: 0  },
+        { product: { id: 5, name: "Mounting bracket MB3" }, isAvailable: true,  stockQuantity: 95 },
+    ],
+    4: [
+        { product: { id: 7, name: "Flow meter FM5" },       isAvailable: true,  stockQuantity: 40 },
+        { product: { id: 4, name: "Pressure sensor P9" },   isAvailable: false, stockQuantity: 0  },
+    ],
+};
+
 export default function Depots() {
-    const [expandedDepot, setExpandedDepot] = useState(null);
+    const [activeDepotId, setActiveDepotId] = useState(null);
+
+    const activeDepot = DEPOTS.find((d) => d.id === activeDepotId) ?? null;
+    const activeProductDepots = activeDepotId ? (PRODUCT_DEPOTS[activeDepotId] ?? []) : [];
+
+    const handleCardClick = (depotId) => {
+        setActiveDepotId((prev) => (prev === depotId ? null : depotId));
+    };
 
     const handleEdit = (depot) => {
         console.log("edit depot", depot);
@@ -71,7 +108,6 @@ export default function Depots() {
                         >
                             Depots
                         </h1>
-
                         <p
                             style={{
                                 margin: "8px 0 0",
@@ -94,8 +130,7 @@ export default function Depots() {
                             fontWeight: 700,
                             fontSize: 16,
                             cursor: "pointer",
-                            boxShadow:
-                                "0 4px 12px rgba(46,157,91,0.18)",
+                            boxShadow: "0 4px 12px rgba(46,157,91,0.18)",
                         }}
                     >
                         + Add Depot
@@ -106,8 +141,7 @@ export default function Depots() {
                 <div
                     style={{
                         display: "grid",
-                        gridTemplateColumns:
-                            "repeat(auto-fill, minmax(280px, 1fr))",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
                         gap: 18,
                     }}
                 >
@@ -115,19 +149,24 @@ export default function Depots() {
                         <DepotCard
                             key={depot.id}
                             depot={depot}
-                            expanded={expandedDepot === depot.id}
-                            onToggle={() =>
-                                setExpandedDepot(
-                                    expandedDepot === depot.id
-                                        ? null
-                                        : depot.id
-                                )
-                            }
-                            onEdit={handleEdit}
-                            onArchive={handleArchive}
+                            productDepots={PRODUCT_DEPOTS[depot.id] ?? []}
+                            active={activeDepotId === depot.id}
+                            onClick={() => handleCardClick(depot.id)}
                         />
                     ))}
                 </div>
+
+                {/* Detail panel — slides in below grid when a depot is selected */}
+                {activeDepot && (
+                    <DepotPanel
+                        depot={activeDepot}
+                        productDepots={activeProductDepots}
+                        onEdit={handleEdit}
+                        onArchive={handleArchive}
+                        onClose={() => setActiveDepotId(null)}
+                    />
+                )}
+
             </div>
         </AppLayout>
     );

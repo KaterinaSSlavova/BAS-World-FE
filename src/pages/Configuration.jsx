@@ -237,7 +237,7 @@ function BrandModal({ open, mode, brand, onSubmit, onClose }) {
     useEffect(() => {
         if (open) {
             setName(brand?.name ?? "");
-            setPictureUrl(brand?.pictureUrl ?? "");
+            setPictureUrl(brand?.picture ?? "");
             setSelectedFile(null);
             setUploading(false);
         }
@@ -372,8 +372,8 @@ function BrandCard({ brand, onEdit, onArchive }) {
                     border: "1px solid #e6eaef", display: "flex", alignItems: "center",
                     justifyContent: "center", overflow: "hidden", flexShrink: 0,
                 }}>
-                    {brand.pictureUrl ? (
-                        <img src={brand.pictureUrl} alt={brand.name}
+                    {brand.picture ? (
+                        <img src={brand.picture} alt={brand.name}
                              style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
                         <span style={{ fontSize: 28, color: "#b0b8c4" }}>🏷️</span>
@@ -404,9 +404,9 @@ function BrandCard({ brand, onEdit, onArchive }) {
                     <div style={{ fontSize: 13, color: "#7b8494" }}>
                         <span style={{ fontWeight: 700 }}>ID:</span> #{brand.id}
                     </div>
-                    {brand.pictureUrl && (
+                    {brand.picture && (
                         <div style={{ fontSize: 13, color: "#7b8494", wordBreak: "break-all" }}>
-                            <span style={{ fontWeight: 700 }}>URL:</span> {brand.pictureUrl}
+                            <span style={{ fontWeight: 700 }}>URL:</span> {brand.picture}
                         </div>
                     )}
                     <div style={{ display: "flex", gap: 8, marginTop: 4 }}>

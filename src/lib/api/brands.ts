@@ -6,12 +6,18 @@ export const getAllBrands = async () => {
 };
 
 export const createBrand = async (name: string, pictureUrl?: string) => {
-    const response = await api.post("/brands", { name, pictureUrl });
+    const response = await api.post("/brands", {
+        name,
+        picture: pictureUrl || undefined
+    });
     return response.data;
 };
 
 export const updateBrand = async (id: number, name: string, pictureUrl?: string) => {
-    const response = await api.put(`/brands/${id}`, { name, pictureUrl });
+    const response = await api.put(`/brands/${id}`, {
+        name,
+        picture: pictureUrl || undefined
+    });
     return response.data;
 };
 

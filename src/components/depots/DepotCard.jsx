@@ -1,153 +1,125 @@
-import { useState } from "react";
+const availabilityColor = (ratio) => {
+    if (ratio >= 0.75) return "#2e9d5b";
+    if (ratio >= 0.4) return "#e67e22";
+    return "#dc2626";
+};
 
-export default function DepotCard({ depot, onEdit, onArchive }) {
-    const [expanded, setExpanded] = useState(false);
+const formatStock = (n) => {
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+    return String(n);
+};
+
+export default function DepotCard({ depot, productDepots = [], active, onClick }) {
+    const total = productDepots.length;
+    const available = productDepots.filter((pd) => pd.isAvailable).length;
+    const totalStock = productDepots.reduce((sum, pd) => sum + pd.stockQuantity, 0);
+    const ratio = total > 0 ? available / total : 0;
+    const pct = Math.round(ratio * 100);
+    const barColor = availabilityColor(ratio);
 
     return (
         <div
+            onClick={onClick}
             style={{
                 background: "#fff",
-                border: "1px solid #e6eaef",
+                border: active ? "1.5px solid #2e9d5b" : "0.5px solid #e6eaef",
                 borderRadius: 18,
                 overflow: "hidden",
-                transition: "all .2s ease",
-                boxShadow: expanded
-                    ? "0 8px 24px rgba(15,23,42,.06)"
-                    : "0 2px 8px rgba(15,23,42,.03)",
+                cursor: "pointer",
+                transition: "border-color .15s",
             }}
         >
             {/* Country strip */}
-            <div
-                style={{
-                    height: 6,
-                    background: depot.color,
-                }}
-            />
+            <div style={{ height: 4, background: depot.color }} />
 
-            <div
-                onClick={() => setExpanded(!expanded)}
-                style={{
-                    padding: 20,
-                    cursor: "pointer",
-                }}
-            >
+            <div style={{ padding: 14 }}>
+                <span style={{ fontSize: 18 }}>{depot.flag}</span>
+
+                <div
+                    style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "#273142",
+                        marginTop: 6,
+                    }}
+                >
+                    {depot.depotName}
+                </div>
+
+                <div style={{ fontSize: 12, color: "#7b8494", marginTop: 2 }}>
+                    {depot.location}
+                </div>
+
+                {/* Stats row */}
                 <div
                     style={{
                         display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        gap: 10,
+                        marginTop: 12,
                     }}
                 >
-                    <div>
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 10,
-                            }}
-                        >
-                            <span style={{ fontSize: 22 }}>
-                                {depot.flag}
-                            </span>
-
-                            <h3
-                                style={{
-                                    margin: 0,
-                                    fontSize: 17,
-                                    fontWeight: 700,
-                                    color: "#273142",
-                                }}
-                            >
-                                {depot.name}
-                            </h3>
-                        </div>
-
-                        <p
-                            style={{
-                                margin: "6px 0 0",
-                                color: "#7b8494",
-                                fontSize: 14,
-                            }}
-                        >
-                            {depot.city}, {depot.country}
-                        </p>
-                    </div>
-
-                    <span
-                        style={{
-                            fontSize: 18,
-                            color: "#9ca3af",
-                        }}
-                    >
-                        {expanded ? "−" : "+"}
-                    </span>
+                    <MiniStat label="Products" value={total} />
+                    <MiniStat label="Available" value={available} />
+                    <MiniStat label="Total stock" value={formatStock(totalStock)} />
                 </div>
-            </div>
 
-            {expanded && (
-                <div
-                    style={{
-                        borderTop: "1px solid #f3f4f6",
-                        padding: 20,
-                        background: "#fafbfc",
-                    }}
-                >
+                {/* Availability bar */}
+                <div style={{ marginTop: 10 }}>
                     <div
                         style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(3,1fr)",
-                            gap: 16,
-                            marginBottom: 18,
+                            display: "flex",
+                            justifyContent: "space-between",
+                            fontSize: 10,
+                            color: "#9ca3af",
+                            marginBottom: 4,
                         }}
                     >
-                        <MiniStat label="Items" value="12,480" />
-                        <MiniStat label="Active" value="8,203" />
-                        <MiniStat label="Archived" value="4,277" />
+                        <span>Availability</span>
+                        <span>{pct}%</span>
                     </div>
-
-                    <div style={{ display: "flex", gap: 10 }}>
-                        <button
-                            onClick={() => onEdit(depot)}
-                            style={actionButton}
-                        >
-                            Edit
-                        </button>
-
-                        <button
-                            onClick={() => onArchive(depot)}
+                    <div
+                        style={{
+                            height: 4,
+                            background: "#f3f4f6",
+                            borderRadius: 2,
+                            overflow: "hidden",
+                        }}
+                    >
+                        <div
                             style={{
-                                ...actionButton,
-                                background: "#fff5f5",
-                                color: "#dc2626",
+                                width: `${pct}%`,
+                                height: "100%",
+                                background: barColor,
+                                borderRadius: 2,
+                                transition: "width .3s ease",
                             }}
-                        >
-                            Archive
-                        </button>
+                        />
                     </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 }
 
 function MiniStat({ label, value }) {
     return (
-        <div>
+        <div style={{ flex: 1 }}>
             <div
                 style={{
-                    fontSize: 12,
-                    color: "#7b8494",
-                    marginBottom: 4,
+                    fontSize: 10,
+                    color: "#9ca3af",
+                    textTransform: "uppercase",
+                    letterSpacing: ".4px",
                 }}
             >
                 {label}
             </div>
-
             <div
                 style={{
-                    fontSize: 18,
+                    fontSize: 15,
                     fontWeight: 700,
                     color: "#273142",
+                    marginTop: 2,
                 }}
             >
                 {value}
@@ -155,13 +127,3 @@ function MiniStat({ label, value }) {
         </div>
     );
 }
-
-const actionButton = {
-    border: "none",
-    borderRadius: 10,
-    padding: "10px 14px",
-    background: "#eefaf2",
-    color: "#2e9d5b",
-    fontWeight: 600,
-    cursor: "pointer",
-};
