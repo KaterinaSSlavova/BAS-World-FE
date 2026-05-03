@@ -2,21 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import AppLayout from "../components/AppLayout";
 import { getAllBrands, createBrand, updateBrand, archiveBrand } from "../lib/api/brands";
 import { getAllCategories, createCategory, updateCategory, archiveCategory } from "../lib/api/categories";
+import { getAllTypes, createType, updateType, archiveType } from "../lib/api/types";
 import { uploadBrandPicture } from "../lib/uploadBrandPicture";
 
-// ─── Static Data ─────────────────────────────────────────────
-
-const INITIAL_TYPES = [
-    { id: 1, name: "Physical Product" },
-    { id: 2, name: "Digital Product" },
-    { id: 3, name: "Service" },
-];
-
 // ─── Helpers ─────────────────────────────────────────────────
-
-function getNextId(items) {
-    return items.length === 0 ? 1 : Math.max(...items.map((i) => i.id)) + 1;
-}
 
 function CountPill({ count }) {
     return (
@@ -141,51 +130,6 @@ function ItemModal({ open, mode, entityLabel, value, onChange, onSubmit, onClose
     );
 }
 
-// ─── Confirm Delete Modal ─────────────────────────────────────
-
-function ConfirmDeleteModal({ open, name, onConfirm, onClose }) {
-    if (!open) return null;
-
-    return (
-        <div
-            style={{
-                position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)",
-                zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
-            }}
-            onClick={onClose}
-        >
-            <div
-                style={{
-                    background: "#fff", borderRadius: 18, padding: "32px 28px",
-                    width: "100%", maxWidth: 420, boxShadow: "0 20px 60px rgba(15,23,42,0.18)",
-                }}
-                onClick={(e) => e.stopPropagation()}
-            >
-                <h2 style={{ margin: "0 0 10px", fontSize: 20, fontWeight: 800, color: "#1f2937" }}>
-                    Delete "{name}"?
-                </h2>
-                <p style={{ margin: "0 0 28px", color: "#7f8792", fontSize: 15 }}>
-                    This action cannot be undone.
-                </p>
-                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-                    <button onClick={onClose} style={{
-                        padding: "11px 22px", borderRadius: 10, border: "1px solid #d9dee5",
-                        background: "#fff", fontSize: 15, fontWeight: 700, color: "#374151", cursor: "pointer",
-                    }}>
-                        Cancel
-                    </button>
-                    <button onClick={onConfirm} style={{
-                        padding: "11px 22px", borderRadius: 10, border: "none",
-                        background: "#d14343", fontSize: 15, fontWeight: 700, color: "#fff", cursor: "pointer",
-                    }}>
-                        Delete
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
 // ─── Category Modal ───────────────────────────────────────────
 
 function CategoryModal({ open, mode, category, allCategories, onSubmit, onClose }) {
@@ -199,7 +143,6 @@ function CategoryModal({ open, mode, category, allCategories, onSubmit, onClose 
         onSubmit({ name: name.trim(), parentId: parentId !== "" ? Number(parentId) : undefined });
     };
 
-    // Exclude self from parent options when editing
     const parentOptions = allCategories.filter((c) => !c.archived && c.id !== category?.id);
 
     return (
@@ -488,15 +431,16 @@ function BrandCard({ brand, onEdit, onArchive }) {
     );
 }
 
-// ─── CRUD Table (Types) ───────────────────────────────────────
+// ─── Types Table ──────────────────────────────────────────────
 
-function CrudTable({ items, entityLabel, onEdit, onDelete }) {
+function TypesTable({ items, onEdit, onArchive, loading, error }) {
+    if (loading) return <div style={{ padding: 24, color: "#7f8792", fontSize: 15 }}>Loading...</div>;
+    if (error) return <div style={{ padding: 24, color: "#d14343", fontSize: 15 }}>{error}</div>;
+
     return (
         <div style={{ background: "#fff", borderRadius: 18, border: "1px solid #e6eaef", overflow: "hidden" }}>
             {items.length === 0 ? (
-                <div style={{ padding: "32px 24px", color: "#7f8792", fontSize: 15 }}>
-                    No {entityLabel.toLowerCase()}s found.
-                </div>
+                <div style={{ padding: "32px 24px", color: "#7f8792", fontSize: 15 }}>No types found.</div>
             ) : (
                 <>
                     <div style={{
@@ -512,18 +456,32 @@ function CrudTable({ items, entityLabel, onEdit, onDelete }) {
                             display: "grid", gridTemplateColumns: "80px 1fr auto",
                             gap: 16, padding: "20px 24px",
                             borderBottom: "1px solid #eef1f4", alignItems: "center",
+                            opacity: item.archived ? 0.6 : 1,
                         }}>
                             <div style={{ fontSize: 14, color: "#7b8494", fontWeight: 600 }}>#{item.id}</div>
-                            <div style={{ fontSize: 16, fontWeight: 700, color: "#273142" }}>{item.name}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <span style={{ fontSize: 16, fontWeight: 700, color: "#273142" }}>{item.name}</span>
+                                {item.archived && (
+                                    <span style={{
+                                        padding: "2px 8px", borderRadius: 999, background: "#fff7e8",
+                                        color: "#d97706", border: "1px solid #f5d29c", fontSize: 11, fontWeight: 700,
+                                    }}>Archived</span>
+                                )}
+                            </div>
                             <div style={{ display: "flex", gap: 8 }}>
                                 <button onClick={() => onEdit(item)} style={{
                                     padding: "8px 16px", borderRadius: 9, border: "1px solid #d9dee5",
                                     background: "#fff", fontSize: 14, fontWeight: 700, color: "#374151", cursor: "pointer",
                                 }}>Edit</button>
-                                <button onClick={() => onDelete(item)} style={{
-                                    padding: "8px 16px", borderRadius: 9, border: "1px solid #fbc9c9",
-                                    background: "#fff5f5", fontSize: 14, fontWeight: 700, color: "#d14343", cursor: "pointer",
-                                }}>Delete</button>
+                                <button onClick={() => onArchive(item)} style={{
+                                    padding: "8px 16px", borderRadius: 9,
+                                    border: item.archived ? "1px solid #b9dec6" : "1px solid #fde9b0",
+                                    background: item.archived ? "#f0faf4" : "#fffbf0",
+                                    fontSize: 14, fontWeight: 700,
+                                    color: item.archived ? "#2e9d5b" : "#d97706", cursor: "pointer",
+                                }}>
+                                    {item.archived ? "Unarchive" : "Archive"}
+                                </button>
                             </div>
                         </div>
                     ))}
@@ -615,8 +573,11 @@ function CategoryTable({ items, allCategories, onEdit, onArchive, loading, error
 export default function Configuration() {
     const [activeTab, setActiveTab] = useState("types");
 
-    // Types (still static)
-    const [types, setTypes] = useState(INITIAL_TYPES);
+    // Types (live)
+    const [types, setTypes] = useState([]);
+    const [typesLoading, setTypesLoading] = useState(false);
+    const [typesError, setTypesError] = useState("");
+    const [showArchivedTypes, setShowArchivedTypes] = useState(false);
 
     // Categories (live)
     const [categories, setCategories] = useState([]);
@@ -637,7 +598,7 @@ export default function Configuration() {
     const [modalMode, setModalMode] = useState("create");
     const [modalValue, setModalValue] = useState("");
     const [editingItem, setEditingItem] = useState(null);
-    const [deleteModal, setDeleteModal] = useState({ open: false, item: null });
+    const [archiveTypeModal, setArchiveTypeModal] = useState({ open: false, item: null });
 
     // Category modal
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -651,6 +612,25 @@ export default function Configuration() {
     const [editingBrand, setEditingBrand] = useState(null);
     const [archiveBrandModal, setArchiveBrandModal] = useState({ open: false, brand: null });
 
+    // ── Load types ──
+    useEffect(() => {
+        if (activeTab !== "types") return;
+        const load = async () => {
+            try {
+                setTypesLoading(true);
+                setTypesError("");
+                const data = await getAllTypes();
+                setTypes(data);
+            } catch (err) {
+                console.error(err);
+                setTypesError("Failed to load types.");
+            } finally {
+                setTypesLoading(false);
+            }
+        };
+        void load();
+    }, [activeTab]);
+
     // ── Load categories ──
     useEffect(() => {
         if (activeTab !== "categories") return;
@@ -660,7 +640,6 @@ export default function Configuration() {
                 setCategoriesError("");
                 const data = await getAllCategories();
                 setCategories(data);
-                console.log(data);
             } catch (err) {
                 console.error(err);
                 setCategoriesError("Failed to load categories.");
@@ -691,10 +670,11 @@ export default function Configuration() {
     }, [activeTab]);
 
     // ── Filtered lists ──
-    const filteredTypes = useMemo(
-        () => types.filter((i) => i.name.toLowerCase().includes(search.toLowerCase())),
-        [types, search]
-    );
+    const filteredTypes = useMemo(() => types.filter((t) => {
+        const matchSearch = t.name.toLowerCase().includes(search.toLowerCase());
+        const matchArchived = showArchivedTypes ? true : !t.archived;
+        return matchSearch && matchArchived;
+    }), [types, search, showArchivedTypes]);
 
     const filteredCategories = useMemo(() => categories.filter((c) => {
         const matchSearch = c.name.toLowerCase().includes(search.toLowerCase());
@@ -708,22 +688,39 @@ export default function Configuration() {
         return matchSearch && matchArchived;
     }), [brands, search, showArchivedBrands]);
 
-    // ── Types handlers (static) ──
-    const openCreate = () => { setModalMode("create"); setModalValue(""); setEditingItem(null); setModalOpen(true); };
-    const openEdit = (item) => { setModalMode("edit"); setModalValue(item.name); setEditingItem(item); setModalOpen(true); };
-    const handleTypeSubmit = () => {
+    // ── Types handlers (live) ──
+    const openCreateType = () => { setModalMode("create"); setModalValue(""); setEditingItem(null); setModalOpen(true); };
+    const openEditType = (item) => { setModalMode("edit"); setModalValue(item.name); setEditingItem(item); setModalOpen(true); };
+
+    const handleTypeSubmit = async () => {
         const trimmed = modalValue.trim();
         if (!trimmed) return;
-        if (modalMode === "create") {
-            setTypes((prev) => [...prev, { id: getNextId(prev), name: trimmed }]);
-        } else {
-            setTypes((prev) => prev.map((i) => i.id === editingItem.id ? { ...i, name: trimmed } : i));
+        try {
+            if (modalMode === "create") {
+                await createType(trimmed);
+            } else {
+                await updateType(editingItem.id, trimmed);
+            }
+            const data = await getAllTypes();
+            setTypes(data);
+            setModalOpen(false);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to save type.");
         }
-        setModalOpen(false);
     };
-    const confirmDeleteType = () => {
-        setTypes((prev) => prev.filter((i) => i.id !== deleteModal.item.id));
-        setDeleteModal({ open: false, item: null });
+
+    const confirmArchiveType = async () => {
+        try {
+            await archiveType(archiveTypeModal.item.id);
+            const data = await getAllTypes();
+            setTypes(data);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to archive type.");
+        } finally {
+            setArchiveTypeModal({ open: false, item: null });
+        }
     };
 
     // ── Category handlers (live) ──
@@ -793,7 +790,7 @@ export default function Configuration() {
     };
 
     const tabs = [
-        { key: "types", label: "Types", count: types.length },
+        { key: "types", label: "Types", count: types.filter((t) => !t.archived).length },
         { key: "categories", label: "Categories", count: categories.filter((c) => !c.archived).length },
         { key: "brands", label: "Brands", count: brands.filter((b) => !b.archived).length },
     ];
@@ -801,7 +798,7 @@ export default function Configuration() {
     const handleAddClick = () => {
         if (activeTab === "brands") openCreateBrand();
         else if (activeTab === "categories") openCreateCategory();
-        else openCreate();
+        else openCreateType();
     };
 
     const addLabel = activeTab === "brands" ? "Brand" : activeTab === "categories" ? "Category" : "Type";
@@ -873,6 +870,18 @@ export default function Configuration() {
                         />
                     </div>
 
+                    {activeTab === "types" && (
+                        <button onClick={() => setShowArchivedTypes((v) => !v)} style={{
+                            height: 50, borderRadius: 12, padding: "0 18px",
+                            border: showArchivedTypes ? "1px solid #2e9d5b" : "1px solid #d9dee5",
+                            background: showArchivedTypes ? "#f0faf4" : "#fff",
+                            color: showArchivedTypes ? "#2e9d5b" : "#273142",
+                            fontWeight: 600, fontSize: 14, cursor: "pointer",
+                        }}>
+                            {showArchivedTypes ? "✓ Showing Archived" : "Show Archived"}
+                        </button>
+                    )}
+
                     {activeTab === "categories" && (
                         <button onClick={() => setShowArchivedCategories((v) => !v)} style={{
                             height: 50, borderRadius: 12, padding: "0 18px",
@@ -900,11 +909,12 @@ export default function Configuration() {
 
                 {/* Content */}
                 {activeTab === "types" && (
-                    <CrudTable
+                    <TypesTable
                         items={filteredTypes}
-                        entityLabel="Type"
-                        onEdit={openEdit}
-                        onDelete={(item) => setDeleteModal({ open: true, item })}
+                        onEdit={openEditType}
+                        onArchive={(item) => setArchiveTypeModal({ open: true, item })}
+                        loading={typesLoading}
+                        error={typesError}
                     />
                 )}
 
@@ -947,8 +957,10 @@ export default function Configuration() {
             <ItemModal open={modalOpen} mode={modalMode} entityLabel="Type"
                        value={modalValue} onChange={setModalValue}
                        onSubmit={handleTypeSubmit} onClose={() => setModalOpen(false)} />
-            <ConfirmDeleteModal open={deleteModal.open} name={deleteModal.item?.name || ""}
-                                onConfirm={confirmDeleteType} onClose={() => setDeleteModal({ open: false, item: null })} />
+            <ConfirmArchiveModal open={archiveTypeModal.open} item={archiveTypeModal.item}
+                                 entityLabel="Type"
+                                 onConfirm={confirmArchiveType}
+                                 onClose={() => setArchiveTypeModal({ open: false, item: null })} />
 
             {/* Category modals */}
             <CategoryModal key={`${categoryModalOpen}-${editingCategory?.id}`} open={categoryModalOpen} mode={categoryModalMode}
