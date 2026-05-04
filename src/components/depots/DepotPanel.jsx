@@ -20,16 +20,10 @@ export default function DepotPanel({ depotId, depot, onClose, onUpdated, onArchi
         setProductsLoading(true);
         getAllProductDepots()
             .then((data) => {
-                console.log("raw product depots:", data);
-                console.log("filtering for depotId:", depotId);
                 const filtered = data.filter((pd) => pd.depotId == depotId);
-                console.log("filtered:", filtered);
                 setProducts(filtered);
             })
-            .catch((err) => {
-                console.log("error fetching products:", err);
-                setProducts([]);
-            })
+            .catch(() => setProducts([]))
             .finally(() => setProductsLoading(false));
     }, [depotId]);
 
@@ -64,130 +58,152 @@ export default function DepotPanel({ depotId, depot, onClose, onUpdated, onArchi
         }
     };
 
+    const handleCancelEdit = () => {
+        setEditing(false);
+        setError(null);
+        setForm({ depotName: depot.depotName, location: depot.location });
+    };
+
     return (
-        <div style={{
-            background: "#fff",
-            border: "0.5px solid #e6eaef",
-            borderRadius: 18,
-            padding: 24,
-            display: "flex",
-            flexDirection: "column",
-            gap: 20,
-        }}>
-
-            {/* Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                    {editing ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            <input
-                                value={form.depotName}
-                                onChange={(e) => setForm((f) => ({ ...f, depotName: e.target.value }))}
-                                placeholder="Depot name"
-                                style={inputStyle}
-                            />
-                            <input
-                                value={form.location}
-                                onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-                                placeholder="Location"
-                                style={inputStyle}
-                            />
-                            {error && <span style={{ fontSize: 12, color: "#dc2626" }}>{error}</span>}
+        <>
+            {/* Edit modal */}
+            {editing && (
+                <div
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        background: "rgba(15,23,42,.4)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 50,
+                    }}
+                    onClick={(e) => { if (e.target === e.currentTarget) handleCancelEdit(); }}
+                >
+                    <div style={{
+                        background: "#fff",
+                        borderRadius: 18,
+                        padding: 32,
+                        width: 440,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 20,
+                        boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
+                    }}>
+                        <div>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: "#273142" }}>Edit depot</div>
+                            <div style={{ fontSize: 13, color: "#7b8494", marginTop: 4 }}>
+                                Update the name or location of this depot.
+                            </div>
                         </div>
-                    ) : (
-                        <>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: "#273142" }}>
-                                {depot.depotName}
-                            </div>
-                            <div style={{ fontSize: 13, color: "#7b8494", marginTop: 3 }}>
-                                {depot.location}
-                            </div>
-                        </>
-                    )}
-                </div>
 
-                <div style={{ display: "flex", gap: 8 }}>
-                    {editing ? (
-                        <>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                <label style={labelStyle}>Depot name</label>
+                                <input
+                                    value={form.depotName}
+                                    onChange={(e) => setForm((f) => ({ ...f, depotName: e.target.value }))}
+                                    placeholder="e.g. Amsterdam North"
+                                    style={inputStyle}
+                                />
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                <label style={labelStyle}>Location</label>
+                                <input
+                                    value={form.location}
+                                    onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                                    placeholder="e.g. Amsterdam"
+                                    style={inputStyle}
+                                />
+                            </div>
+                        </div>
+
+                        {error && <div style={{ fontSize: 12, color: "#dc2626" }}>{error}</div>}
+
+                        <div style={{ display: "flex", gap: 10 }}>
+                            <button onClick={handleCancelEdit} style={btnModalCancel}>
+                                Cancel
+                            </button>
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                style={{ ...btnGhost, background: "#2e9d5b", color: "#fff", border: "none" }}
+                                style={{ ...btnModalSave, opacity: saving ? 0.75 : 1 }}
                             >
-                                {saving ? "Saving…" : "Save"}
+                                {saving ? "Saving…" : "Save changes"}
                             </button>
-                            <button
-                                onClick={() => {
-                                    setEditing(false);
-                                    setError(null);
-                                    setForm({ depotName: depot.depotName, location: depot.location });
-                                }}
-                                style={btnGhost}
-                            >
-                                Cancel
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <button onClick={() => setEditing(true)} style={btnGhost}>Edit</button>
-                            <button
-                                onClick={handleArchive}
-                                disabled={archiving}
-                                style={{ ...btnGhost, color: "#dc2626" }}
-                            >
-                                {archiving ? "Archiving…" : "Archive"}
-                            </button>
-                            <button onClick={onClose} style={btnGhost}>✕ Close</button>
-                        </>
-                    )}
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
 
-            <div style={{ height: "0.5px", background: "#f3f4f6" }} />
-
-            {/* Summary metrics */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-                <Metric label="Total products" value={products.length} sub="product types stocked" />
-                <Metric label="Available" value={availableCount} sub={`${unavailableCount} unavailable`} />
-                <Metric label="Total stock" value={totalStock.toLocaleString()} sub="units across all products" />
-            </div>
-
-            <div style={{ height: "0.5px", background: "#f3f4f6" }} />
-
-            {/* Product table */}
-            <div>
-                <div style={sectionLabel}>Products in this depot</div>
-
-                {productsLoading ? (
-                    <div style={{ fontSize: 13, color: "#9ca3af", padding: "16px 0" }}>
-                        Loading products…
+            {/* Panel */}
+            <div style={{
+                background: "#fff",
+                border: "0.5px solid #e6eaef",
+                borderRadius: 18,
+                padding: 24,
+                display: "flex",
+                flexDirection: "column",
+                gap: 20,
+            }}>
+                {/* Header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: "#273142" }}>{depot.depotName}</div>
+                        <div style={{ fontSize: 13, color: "#7b8494", marginTop: 3 }}>{depot.location}</div>
                     </div>
-                ) : products.length === 0 ? (
-                    <div style={{ fontSize: 13, color: "#9ca3af", padding: "16px 0" }}>
-                        No products assigned to this depot yet.
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <button onClick={() => setEditing(true)} style={btnSecondary}>Edit</button>
+                        <button onClick={handleArchive} disabled={archiving} style={btnDanger}>
+                            {archiving ? "Archiving…" : "Archive"}
+                        </button>
+                        <button onClick={onClose} style={btnClose}>✕</button>
                     </div>
-                ) : (
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                        <thead>
-                        <tr>
-                            {["Product", "SKU", "Brand", "Stock", "Status"].map((h) => (
-                                <th key={h} style={thStyle}>{h}</th>
-                            ))}
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {products.map((pd) => (
-                            <tr
-                                key={pd.productId}
-                                style={{ borderTop: "0.5px solid #f3f4f6" }}
-                                onMouseEnter={(e) => (e.currentTarget.style.background = "#fafbfc")}
-                                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                            >
-                                <td style={tdStyle}>{pd.productName}</td>
-                                <td style={{ ...tdStyle, color: "#7b8494", fontFamily: "monospace" }}>{pd.sku}</td>
-                                <td style={tdStyle}>{pd.brand}</td>
-                                <td style={tdStyle}>{pd.stockQuantity.toLocaleString()}</td>
-                                <td style={tdStyle}>
+                </div>
+
+                <div style={{ height: "0.5px", background: "#f3f4f6" }} />
+
+                {/* Summary metrics */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                    <Metric label="Total products" value={products.length} sub="product types stocked" />
+                    <Metric label="Available" value={availableCount} sub={`${unavailableCount} unavailable`} />
+                    <Metric label="Total stock" value={totalStock.toLocaleString()} sub="units across all products" />
+                </div>
+
+                <div style={{ height: "0.5px", background: "#f3f4f6" }} />
+
+                {/* Product table */}
+                <div>
+                    <div style={sectionLabel}>Products in this depot</div>
+
+                    {productsLoading ? (
+                        <div style={{ fontSize: 13, color: "#9ca3af", padding: "16px 0" }}>Loading products…</div>
+                    ) : products.length === 0 ? (
+                        <div style={{ fontSize: 13, color: "#9ca3af", padding: "16px 0" }}>
+                            No products assigned to this depot yet.
+                        </div>
+                    ) : (
+                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                            <thead>
+                            <tr>
+                                {["Product", "SKU", "Brand", "Stock", "Status"].map((h) => (
+                                    <th key={h} style={thStyle}>{h}</th>
+                                ))}
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {products.map((pd) => (
+                                <tr
+                                    key={pd.productId}
+                                    style={{ borderTop: "0.5px solid #f3f4f6" }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.background = "#fafbfc")}
+                                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                                >
+                                    <td style={tdStyle}>{pd.productName}</td>
+                                    <td style={{ ...tdStyle, color: "#7b8494", fontFamily: "monospace" }}>{pd.sku}</td>
+                                    <td style={tdStyle}>{pd.brand}</td>
+                                    <td style={tdStyle}>{pd.stockQuantity.toLocaleString()}</td>
+                                    <td style={tdStyle}>
                                         <span style={{
                                             fontSize: 11,
                                             padding: "3px 10px",
@@ -199,14 +215,15 @@ export default function DepotPanel({ depotId, depot, onClose, onUpdated, onArchi
                                         }}>
                                             {pd.available ? "Available" : "Unavailable"}
                                         </span>
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                )}
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
             </div>
-        </div>
+        </>
     );
 }
 
@@ -220,23 +237,78 @@ function Metric({ label, value, sub }) {
     );
 }
 
+const labelStyle = {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#7b8494",
+};
+
 const inputStyle = {
     border: "0.5px solid #d1d5db",
     borderRadius: 10,
-    padding: "8px 12px",
+    padding: "10px 14px",
     fontSize: 14,
     color: "#273142",
     outline: "none",
-    width: 260,
+    width: "100%",
 };
 
-const btnGhost = {
-    background: "#f9fafb",
-    border: "0.5px solid #e6eaef",
-    borderRadius: 10,
-    padding: "6px 14px",
-    fontSize: 12,
+const btnModalSave = {
+    flex: 1,
+    background: "#2e9d5b",
+    color: "#fff",
+    border: "none",
+    borderRadius: 12,
+    padding: "13px 0",
+    fontSize: 15,
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 2px 8px rgba(46,157,91,0.25)",
+};
+
+const btnModalCancel = {
+    flex: 1,
+    background: "#f4f5f7",
     color: "#7b8494",
+    border: "none",
+    borderRadius: 12,
+    padding: "13px 0",
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: "pointer",
+};
+
+const btnSecondary = {
+    background: "#fff",
+    color: "#273142",
+    border: "1px solid #d1d5db",
+    borderRadius: 10,
+    padding: "9px 18px",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
+};
+
+const btnDanger = {
+    background: "#fff5f5",
+    color: "#dc2626",
+    border: "1px solid #fca5a5",
+    borderRadius: 10,
+    padding: "9px 18px",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    boxShadow: "0 1px 4px rgba(220,38,38,0.1)",
+};
+
+const btnClose = {
+    background: "#f9fafb",
+    border: "1px solid #e6eaef",
+    borderRadius: 10,
+    padding: "9px 12px",
+    fontSize: 13,
+    color: "#9ca3af",
     cursor: "pointer",
     fontWeight: 500,
 };

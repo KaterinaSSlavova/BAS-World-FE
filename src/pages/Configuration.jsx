@@ -406,9 +406,19 @@ function BrandCard({ brand, onEdit, onArchive }) {
                     </div>
                     {brand.picture && (
                         <div style={{ fontSize: 13, color: "#7b8494", wordBreak: "break-all" }}>
-                            <span style={{ fontWeight: 700 }}>URL:</span> {brand.picture}
+                            <span style={{ fontWeight: 700 }}>URL:</span>{" "}
+                            <a
+
+                            href={brand.picture}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ color: "#2e9d5b", textDecoration: "underline", cursor: "pointer" }}
+                            >
+                            {brand.picture}
+                        </a>
                         </div>
-                    )}
+                        )}
                     <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
                         <button onClick={(e) => { e.stopPropagation(); onEdit(brand); }} style={{
                             flex: 1, padding: "9px 0", borderRadius: 9,
@@ -573,19 +583,16 @@ function CategoryTable({ items, allCategories, onEdit, onArchive, loading, error
 export default function Configuration() {
     const [activeTab, setActiveTab] = useState("types");
 
-    // Types (live)
     const [types, setTypes] = useState([]);
     const [typesLoading, setTypesLoading] = useState(false);
     const [typesError, setTypesError] = useState("");
     const [showArchivedTypes, setShowArchivedTypes] = useState(false);
 
-    // Categories (live)
     const [categories, setCategories] = useState([]);
     const [categoriesLoading, setCategoriesLoading] = useState(false);
     const [categoriesError, setCategoriesError] = useState("");
     const [showArchivedCategories, setShowArchivedCategories] = useState(false);
 
-    // Brands (live)
     const [brands, setBrands] = useState([]);
     const [brandsLoading, setBrandsLoading] = useState(false);
     const [brandsError, setBrandsError] = useState("");
@@ -612,83 +619,58 @@ export default function Configuration() {
     const [editingBrand, setEditingBrand] = useState(null);
     const [archiveBrandModal, setArchiveBrandModal] = useState({ open: false, brand: null });
 
-    // ── Load types ──
+    // ── Load all on mount ──
     useEffect(() => {
-        if (activeTab !== "types") return;
-        const load = async () => {
+        const loadAll = async () => {
+            setTypesLoading(true);
             try {
-                setTypesLoading(true);
-                setTypesError("");
                 const data = await getAllTypes();
                 setTypes(data);
-            } catch (err) {
-                console.error(err);
-                setTypesError("Failed to load types.");
-            } finally {
-                setTypesLoading(false);
-            }
-        };
-        void load();
-    }, [activeTab]);
+            } catch { setTypesError("Failed to load types."); }
+            finally { setTypesLoading(false); }
 
-    // ── Load categories ──
-    useEffect(() => {
-        if (activeTab !== "categories") return;
-        const load = async () => {
+            setCategoriesLoading(true);
             try {
-                setCategoriesLoading(true);
-                setCategoriesError("");
                 const data = await getAllCategories();
                 setCategories(data);
-            } catch (err) {
-                console.error(err);
-                setCategoriesError("Failed to load categories.");
-            } finally {
-                setCategoriesLoading(false);
-            }
-        };
-        void load();
-    }, [activeTab]);
+            } catch { setCategoriesError("Failed to load categories."); }
+            finally { setCategoriesLoading(false); }
 
-    // ── Load brands ──
-    useEffect(() => {
-        if (activeTab !== "brands") return;
-        const load = async () => {
+            setBrandsLoading(true);
             try {
-                setBrandsLoading(true);
-                setBrandsError("");
                 const data = await getAllBrands();
                 setBrands(data);
-            } catch (err) {
-                console.error(err);
-                setBrandsError("Failed to load brands.");
-            } finally {
-                setBrandsLoading(false);
-            }
+            } catch { setBrandsError("Failed to load brands."); }
+            finally { setBrandsLoading(false); }
         };
-        void load();
-    }, [activeTab]);
+        void loadAll();
+    }, []);
 
-    // ── Filtered lists ──
-    const filteredTypes = useMemo(() => types.filter((t) => {
-        const matchSearch = t.name.toLowerCase().includes(search.toLowerCase());
-        const matchArchived = showArchivedTypes ? true : !t.archived;
-        return matchSearch && matchArchived;
-    }), [types, search, showArchivedTypes]);
+    // ── Reload all (called after any mutation) ──
+    const reloadAll = async () => {
+        const [t, c, b] = await Promise.all([getAllTypes(), getAllCategories(), getAllBrands()]);
+        setTypes(t);
+        setCategories(c);
+        setBrands(b);
+    };
 
-    const filteredCategories = useMemo(() => categories.filter((c) => {
-        const matchSearch = c.name.toLowerCase().includes(search.toLowerCase());
-        const matchArchived = showArchivedCategories ? true : !c.archived;
-        return matchSearch && matchArchived;
-    }), [categories, search, showArchivedCategories]);
+    // ── Filtered + sorted lists ──
+    const filteredTypes = useMemo(() => types
+            .filter((t) => t.name.toLowerCase().includes(search.toLowerCase()) && (showArchivedTypes || !t.archived))
+            .sort((a, b) => b.id - a.id),
+        [types, search, showArchivedTypes]);
 
-    const filteredBrands = useMemo(() => brands.filter((b) => {
-        const matchSearch = b.name.toLowerCase().includes(search.toLowerCase());
-        const matchArchived = showArchivedBrands ? true : !b.archived;
-        return matchSearch && matchArchived;
-    }), [brands, search, showArchivedBrands]);
+    const filteredCategories = useMemo(() => categories
+            .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) && (showArchivedCategories || !c.archived))
+            .sort((a, b) => b.id - a.id),
+        [categories, search, showArchivedCategories]);
 
-    // ── Types handlers (live) ──
+    const filteredBrands = useMemo(() => brands
+            .filter((b) => b.name.toLowerCase().includes(search.toLowerCase()) && (showArchivedBrands || !b.archived))
+            .sort((a, b) => b.id - a.id),
+        [brands, search, showArchivedBrands]);
+
+    // ── Types handlers ──
     const openCreateType = () => { setModalMode("create"); setModalValue(""); setEditingItem(null); setModalOpen(true); };
     const openEditType = (item) => { setModalMode("edit"); setModalValue(item.name); setEditingItem(item); setModalOpen(true); };
 
@@ -701,8 +683,7 @@ export default function Configuration() {
             } else {
                 await updateType(editingItem.id, trimmed);
             }
-            const data = await getAllTypes();
-            setTypes(data);
+            await reloadAll();
             setModalOpen(false);
         } catch (err) {
             console.error(err);
@@ -713,8 +694,7 @@ export default function Configuration() {
     const confirmArchiveType = async () => {
         try {
             await archiveType(archiveTypeModal.item.id);
-            const data = await getAllTypes();
-            setTypes(data);
+            await reloadAll();
         } catch (err) {
             console.error(err);
             alert("Failed to archive type.");
@@ -723,7 +703,7 @@ export default function Configuration() {
         }
     };
 
-    // ── Category handlers (live) ──
+    // ── Category handlers ──
     const openCreateCategory = () => { setCategoryModalMode("create"); setEditingCategory(null); setCategoryModalOpen(true); };
     const openEditCategory = (cat) => { setCategoryModalMode("edit"); setEditingCategory(cat); setCategoryModalOpen(true); };
 
@@ -734,8 +714,7 @@ export default function Configuration() {
             } else {
                 await updateCategory(editingCategory.id, name, parentId);
             }
-            const data = await getAllCategories();
-            setCategories(data);
+            await reloadAll();
             setCategoryModalOpen(false);
         } catch (err) {
             console.error(err);
@@ -746,8 +725,7 @@ export default function Configuration() {
     const confirmArchiveCategory = async () => {
         try {
             await archiveCategory(archiveCategoryModal.item.id);
-            const data = await getAllCategories();
-            setCategories(data);
+            await reloadAll();
         } catch (err) {
             console.error(err);
             alert("Failed to archive category.");
@@ -756,7 +734,7 @@ export default function Configuration() {
         }
     };
 
-    // ── Brand handlers (live) ──
+    // ── Brand handlers ──
     const openCreateBrand = () => { setBrandModalMode("create"); setEditingBrand(null); setBrandModalOpen(true); };
     const openEditBrand = (brand) => { setBrandModalMode("edit"); setEditingBrand(brand); setBrandModalOpen(true); };
 
@@ -767,8 +745,7 @@ export default function Configuration() {
             } else {
                 await updateBrand(editingBrand.id, name, pictureUrl ?? undefined);
             }
-            const data = await getAllBrands();
-            setBrands(data);
+            await reloadAll();
             setBrandModalOpen(false);
         } catch (err) {
             console.error(err);
@@ -779,8 +756,7 @@ export default function Configuration() {
     const confirmArchiveBrand = async () => {
         try {
             await archiveBrand(archiveBrandModal.brand.id);
-            const data = await getAllBrands();
-            setBrands(data);
+            await reloadAll();
         } catch (err) {
             console.error(err);
             alert("Failed to archive brand.");
@@ -881,7 +857,6 @@ export default function Configuration() {
                             {showArchivedTypes ? "✓ Showing Archived" : "Show Archived"}
                         </button>
                     )}
-
                     {activeTab === "categories" && (
                         <button onClick={() => setShowArchivedCategories((v) => !v)} style={{
                             height: 50, borderRadius: 12, padding: "0 18px",
@@ -893,7 +868,6 @@ export default function Configuration() {
                             {showArchivedCategories ? "✓ Showing Archived" : "Show Archived"}
                         </button>
                     )}
-
                     {activeTab === "brands" && (
                         <button onClick={() => setShowArchivedBrands((v) => !v)} style={{
                             height: 50, borderRadius: 12, padding: "0 18px",
@@ -917,7 +891,6 @@ export default function Configuration() {
                         error={typesError}
                     />
                 )}
-
                 {activeTab === "categories" && (
                     <CategoryTable
                         items={filteredCategories}
@@ -928,7 +901,6 @@ export default function Configuration() {
                         error={categoriesError}
                     />
                 )}
-
                 {activeTab === "brands" && (
                     brandsLoading ? (
                         <div style={{ padding: 24, color: "#7f8792", fontSize: 15 }}>Loading...</div>
@@ -963,7 +935,8 @@ export default function Configuration() {
                                  onClose={() => setArchiveTypeModal({ open: false, item: null })} />
 
             {/* Category modals */}
-            <CategoryModal key={`${categoryModalOpen}-${editingCategory?.id}`} open={categoryModalOpen} mode={categoryModalMode}
+            <CategoryModal key={`${categoryModalOpen}-${editingCategory?.id}`}
+                           open={categoryModalOpen} mode={categoryModalMode}
                            category={editingCategory} allCategories={categories}
                            onSubmit={handleCategorySubmit} onClose={() => setCategoryModalOpen(false)} />
             <ConfirmArchiveModal open={archiveCategoryModal.open} item={archiveCategoryModal.item}
