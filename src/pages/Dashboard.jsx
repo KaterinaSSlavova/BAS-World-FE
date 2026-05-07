@@ -5,6 +5,9 @@ import AppLayout from "../components/AppLayout";
 import StatCard from "../components/StatCard";
 
 function mapProduct(item) {
+    const product = item.product ?? {};
+    const firstDepot = item.depots?.[0] ?? {};
+
     return {
         sku: item.sku,
         name: item.productName,
@@ -21,7 +24,16 @@ function formatPrice(value) {
         style: "currency",
         currency: "EUR",
         maximumFractionDigits: 0,
-    }).format(value);
+    }).format(Number(value ?? 0));
+}
+
+function isActive(status) {
+    return (status ?? "").toUpperCase() === "ACTIVE";
+}
+
+function formatStatus(status) {
+    const safeStatus = status ?? "UNKNOWN";
+    return safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1).toLowerCase();
 }
 
 export default function Dashboard() {
@@ -45,12 +57,14 @@ export default function Dashboard() {
             try {
                 setLoading(true);
                 setError("");
+
                 const [productData, depotData] = await Promise.all([
                     getAllProductDepots(),
                     getDepotOverview(),
                 ]);
-                setProducts(productData.map(mapProduct));
-                setDepots(depotData.depots ?? []);
+
+                setProducts((productData ?? []).map(mapProduct));
+                setDepots(depotData?.depots ?? []);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load dashboard data.");
@@ -58,42 +72,66 @@ export default function Dashboard() {
                 setLoading(false);
             }
         };
+
         void load();
     }, []);
 
     const activeCount = useMemo(
-        () => products.filter(p => p.status.toUpperCase() === "ACTIVE").length,
+        () => products.filter((p) => isActive(p.status)).length,
         [products]
     );
+
     const unavailableCount = useMemo(
-        () => products.filter(p => !p.available).length,
+        () => products.filter((p) => !p.available).length,
         [products]
     );
+
     const lowStockCount = useMemo(
-        () => products.filter(p => p.status.toUpperCase() === "LOW_STOCK").length,
+        () => products.filter((p) => Number(p.stockQuantity ?? 0) < 10).length,
         [products]
     );
+
     const inventoryValue = useMemo(
-        () => products.reduce((sum, p) => sum + p.price, 0),
+        () => products.reduce((sum, p) => sum + Number(p.price ?? 0), 0),
         [products]
     );
 
     if (loading) {
-        return <AppLayout><div style={{ padding: 40, color: "#7f8792" }}>Loading...</div></AppLayout>;
+        return (
+            <AppLayout>
+                <div style={{ padding: 40, color: "#7f8792" }}>Loading...</div>
+            </AppLayout>
+        );
     }
 
     if (error) {
-        return <AppLayout><div style={{ padding: 40, color: "#d14343" }}>{error}</div></AppLayout>;
+        return (
+            <AppLayout>
+                <div style={{ padding: 40, color: "#d14343" }}>{error}</div>
+            </AppLayout>
+        );
     }
 
     return (
         <AppLayout>
-            {/* Header */}
             <div style={{ marginBottom: 28 }}>
-                <h1 style={{ fontSize: isMobile ? 24 : 28, fontWeight: 800, color: "#1f2937", margin: 0 }}>
+                <h1
+                    style={{
+                        fontSize: isMobile ? 24 : 28,
+                        fontWeight: 800,
+                        color: "#1f2937",
+                        margin: 0,
+                    }}
+                >
                     Dashboard
                 </h1>
-                <p style={{ color: "#7f8792", margin: "4px 0 0", fontSize: isMobile ? 14 : 16 }}>
+                <p
+                    style={{
+                        color: "#7f8792",
+                        margin: "4px 0 0",
+                        fontSize: isMobile ? 14 : 16,
+                    }}
+                >
                     Cross-sell product management overview
                 </p>
             </div>
@@ -135,10 +173,30 @@ export default function Dashboard() {
                                             {p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase()}
                                         </span>
                                     </div>
-                                    <div style={{ fontSize: 12, color: "#7b8494", fontWeight: 600 }}>SKU: {p.sku}</div>
+
+                                    <div
+                                        style={{
+                                            fontSize: 12,
+                                            color: "#7b8494",
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        SKU: {p.sku}
+                                    </div>
+
                                     <div style={{ display: "flex", gap: 16 }}>
-                                        <div style={{ fontSize: 12, color: "#6b7280" }}>{p.category}</div>
-                                        <div style={{ fontSize: 13, fontWeight: 600, color: "#273142" }}>{formatPrice(p.price)}</div>
+                                        <div style={{ fontSize: 12, color: "#6b7280" }}>
+                                            {p.category}
+                                        </div>
+                                        <div
+                                            style={{
+                                                fontSize: 13,
+                                                fontWeight: 600,
+                                                color: "#273142",
+                                            }}
+                                        >
+                                            {formatPrice(p.price)}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -152,6 +210,7 @@ export default function Dashboard() {
                             }}>
                                 <div>SKU</div><div>Product</div><div>Category</div><div>Price</div><div>Status</div>
                             </div>
+
                             {products.slice(0, 8).map((p, i) => (
                                 <div key={p.sku} style={{
                                     display: "grid", gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr", gap: 12,
