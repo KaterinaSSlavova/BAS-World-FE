@@ -1,41 +1,46 @@
 import { useEffect, useMemo, useState } from "react";
 import { createProduct } from "../lib/api/products";
-import {
-    getAllProductDepots,
-    updateProductDepot,
-} from "../lib/api/productDepots";
+import { getAllProductDepots, updateProduct } from "../lib/api/productDepots";
+import { getAllBrands } from "../lib/api/brands";
+import { getDepotOverview } from "../lib/api/depots";
+import { getAllCategories } from "../lib/api/categories";
+import { getAllTypes } from "../lib/api/types";
 import CreateProductModal, {
     type CreateProductFormData,
+    type DepotFormRow,
 } from "../components/ui/create_product_modal";
 import ProductDetailsModal from "../components/ui/product-details-modal";
 import AppLayout from "../components/AppLayout";
 
-type BackendProductDepot = {
-    productId: number;
-    sku: string;
-    productName: string;
-    description: string;
-    brand: string;
-    price: number;
-    status: string;
-
-    type: string;
-    typeId: number;
-
-    category: string;
-    categoryId: number;
-
-    depotName: string;
-    depotId: number;
-
-    stockQuantity: number;
-    available: boolean;
+type BackendProductWithDepots = {
+    product: {
+        id: number;
+        sku: string;
+        name: string;
+        description: string;
+        brand?: { id: number; name: string };
+        status: string;
+        type?: { id: number; name: string };
+        category?: { id: number; name: string };
+    };
+    depots: {
+        depot: {
+            id: number;
+            depotName: string;
+            location?: string;
+        };
+        stockQuantity: number;
+        costPrice: number;
+        salePrice: number;
+        available: boolean;
+    }[];
 };
 
 export type ProductRow = {
     id: string;
     productId: number;
     depotId: number;
+    brandId: number;
     categoryId: number;
     typeId: number;
     sku: string;
@@ -45,6 +50,8 @@ export type ProductRow = {
     type: string;
     depotName: string;
     price: number;
+    costPrice: number;
+    salePrice: number;
     stockQuantity: number;
     status: string;
     available: boolean;
@@ -56,29 +63,41 @@ export type SelectOption = {
     name: string;
 };
 
-const TYPE_OPTIONS: SelectOption[] = [{ id: 1, name: "Physical Product" }];
-const CATEGORY_OPTIONS: SelectOption[] = [{ id: 1, name: "Tyre" }];
-const DEPOT_OPTIONS: SelectOption[] = [{ id: 1, name: "Eindhoven Depot" }];
+function normalizeDepotOverview(data: any): SelectOption[] {
+    const depots = Array.isArray(data) ? data : data?.depots ?? [];
 
-function mapBackendProductToFrontend(item: BackendProductDepot): ProductRow {
-    return {
-        id: item.sku,
-        productId: item.productId,
-        depotId: item.depotId,
-        categoryId: item.categoryId,
-        typeId: item.typeId,
-        sku: item.sku,
-        name: item.productName,
-        brand: item.brand,
-        category: item.category,
-        type: item.type,
-        depotName: item.depotName,
-        price: Number(item.price),
-        stockQuantity: Number(item.stockQuantity),
-        status: item.status,
-        available: Boolean(item.available),
-        description: item.description ?? "",
-    };
+    return depots.map((depot: any, index: number) => ({
+        id: depot.id ?? index,
+        name: depot.depotName ?? depot.name ?? "Unnamed depot",
+    }));
+}
+
+function mapBackendProductToFrontend(item: BackendProductWithDepots): ProductRow[] {
+    return (item.depots ?? []).map((depotItem) => ({
+        id: `${item.product.id}-${depotItem.depot.id}`,
+        productId: item.product.id,
+        depotId: depotItem.depot.id,
+        brandId: item.product.brand?.id ?? 0,
+        categoryId: item.product.category?.id ?? 0,
+        typeId: item.product.type?.id ?? 0,
+        sku: item.product.sku,
+        name: item.product.name,
+        brand: item.product.brand?.name ?? "Unknown",
+        category: item.product.category?.name ?? "Unknown",
+        type: item.product.type?.name ?? "Unknown",
+        depotName: depotItem.depot.depotName,
+        price: Number(depotItem.salePrice ?? 0),
+        costPrice: Number(depotItem.costPrice ?? 0),
+        salePrice: Number(depotItem.salePrice ?? 0),
+        stockQuantity: Number(depotItem.stockQuantity ?? 0),
+        status: item.product.status ?? "Unknown",
+        available: Boolean(depotItem.available),
+        description: item.product.description ?? "",
+    }));
+}
+
+function flattenProducts(data: BackendProductWithDepots[]) {
+    return data.flatMap(mapBackendProductToFrontend);
 }
 
 function formatPrice(value: number) {
@@ -86,11 +105,22 @@ function formatPrice(value: number) {
         style: "currency",
         currency: "EUR",
         maximumFractionDigits: 0,
-    }).format(value);
+    }).format(Number(value ?? 0));
 }
 
 function formatStatusLabel(status: string) {
-    const normalized = status.toUpperCase();
+    const normalized = (status ?? "").toUpperCase();
+
+    if (normalized === "ACTIVE") return "Active";
+    if (normalized === "INACTIVE") return "Inactive";
+    if (normalized === "DRAFT") return "Draft";
+    if (normalized === "ARCHIVED") return "Archived";
+
+    return status;
+}
+
+function toBackendStatus(status: string) {
+    const normalized = (status ?? "").toUpperCase();
 
     if (normalized === "ACTIVE") return "Active";
     if (normalized === "INACTIVE") return "Inactive";
@@ -107,7 +137,7 @@ function StatusPill({
     status: string;
     compact?: boolean;
 }) {
-    const normalized = status.toLowerCase();
+    const normalized = (status ?? "").toLowerCase();
 
     let background = "#e8f5ec";
     let color = "#2e9d5b";
@@ -223,12 +253,20 @@ function MobileDetailRow({
 export default function Products() {
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("all");
-    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [brandFilter, setBrandFilter] = useState("all");
+    const [typeFilter, setTypeFilter] = useState("all");
+    const [depotFilter, setDepotFilter] = useState("all");
 
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(null);
 
     const [products, setProducts] = useState<ProductRow[]>([]);
+    const [brandOptions, setBrandOptions] = useState<SelectOption[]>([]);
+    const [typeOptions, setTypeOptions] = useState<SelectOption[]>([]);
+    const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
+    const [depotOptions, setDepotOptions] = useState<SelectOption[]>([]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -241,15 +279,79 @@ export default function Products() {
         sku: "",
         name: "",
         description: "",
-        brand: "",
-        price: "",
-        status: "ACTIVE",
-        typeId: 1,
-        categoryId: 1,
-        depotId: 1,
-        stockQuantity: "",
-        available: true,
+        brandId: "",
+        status: "Active",
+        typeId: "",
+        categoryId: "",
+        productDepots: [
+            {
+                depotId: "",
+                stockQuantity: "",
+                costPrice: "",
+                salePrice: "",
+                available: true,
+            },
+        ],
     });
+
+    const activeDepotNames = useMemo(() => {
+        return new Set(depotOptions.map((depot) => depot.name));
+    }, [depotOptions]);
+
+    const activeProducts = useMemo(() => {
+        return products.filter((product) => activeDepotNames.has(product.depotName));
+    }, [products, activeDepotNames]);
+
+    const loadProducts = async () => {
+        try {
+            setLoading(true);
+            setError("");
+
+            const data: BackendProductWithDepots[] = await getAllProductDepots();
+            setProducts(flattenProducts(data ?? []));
+        } catch (err) {
+            console.error(err);
+            setError("Failed to load products.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadOptions = async () => {
+        try {
+            const [brands, types, categories, depots] = await Promise.all([
+                getAllBrands(),
+                getAllTypes(),
+                getAllCategories(),
+                getDepotOverview(),
+            ]);
+
+            setBrandOptions(
+                (brands ?? []).map((brand: any) => ({
+                    id: brand.id,
+                    name: brand.name,
+                }))
+            );
+
+            setTypeOptions(
+                (types ?? []).map((type: any) => ({
+                    id: type.id,
+                    name: type.name,
+                }))
+            );
+
+            setCategoryOptions(
+                (categories ?? []).map((category: any) => ({
+                    id: category.id,
+                    name: category.name,
+                }))
+            );
+
+            setDepotOptions(normalizeDepotOverview(depots));
+        } catch (err) {
+            console.error("Failed to load select options", err);
+        }
+    };
 
     useEffect(() => {
         const handleResize = () => {
@@ -261,28 +363,12 @@ export default function Products() {
     }, []);
 
     useEffect(() => {
-        const loadProducts = async () => {
-            try {
-                setLoading(true);
-                setError("");
-
-                const data: BackendProductDepot[] = await getAllProductDepots();
-                const mapped: ProductRow[] = data.map(mapBackendProductToFrontend);
-
-                setProducts(mapped);
-            } catch (err) {
-                console.error(err);
-                setError("Failed to load products.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
         void loadProducts();
+        void loadOptions();
     }, []);
 
     const handleProductFormChange = (
-        field: keyof CreateProductFormData,
+        field: keyof Omit<CreateProductFormData, "productDepots">,
         value: string | number | boolean
     ) => {
         setNewProduct((prev) => ({
@@ -291,19 +377,60 @@ export default function Products() {
         }));
     };
 
+    const handleDepotChange = (
+        index: number,
+        field: keyof DepotFormRow,
+        value: string | number | boolean
+    ) => {
+        setNewProduct((prev) => ({
+            ...prev,
+            productDepots: prev.productDepots.map((row, i) =>
+                i === index ? { ...row, [field]: value } : row
+            ),
+        }));
+    };
+
+    const handleAddDepot = () => {
+        setNewProduct((prev) => ({
+            ...prev,
+            productDepots: [
+                ...prev.productDepots,
+                {
+                    depotId: "",
+                    stockQuantity: "",
+                    costPrice: "",
+                    salePrice: "",
+                    available: true,
+                },
+            ],
+        }));
+    };
+
+    const handleRemoveDepot = (index: number) => {
+        setNewProduct((prev) => ({
+            ...prev,
+            productDepots: prev.productDepots.filter((_, i) => i !== index),
+        }));
+    };
+
     const resetForm = () => {
         setNewProduct({
             sku: "",
             name: "",
             description: "",
-            brand: "",
-            price: "",
-            status: "ACTIVE",
-            typeId: 1,
-            categoryId: 1,
-            depotId: 1,
-            stockQuantity: "",
-            available: true,
+            brandId: "",
+            status: "Active",
+            typeId: "",
+            categoryId: "",
+            productDepots: [
+                {
+                    depotId: "",
+                    stockQuantity: "",
+                    costPrice: "",
+                    salePrice: "",
+                    available: true,
+                },
+            ],
         });
     };
 
@@ -312,27 +439,31 @@ export default function Products() {
             sku,
             name,
             description,
-            brand,
-            price,
+            brandId,
             status,
             typeId,
             categoryId,
-            depotId,
-            stockQuantity,
-            available,
+            productDepots,
         } = newProduct;
+
+        const hasInvalidDepot = productDepots.some(
+            (depot) =>
+                depot.depotId === "" ||
+                depot.stockQuantity === "" ||
+                depot.costPrice === "" ||
+                depot.salePrice === ""
+        );
 
         if (
             !sku.trim() ||
             !name.trim() ||
             !description.trim() ||
-            !brand.trim() ||
-            price === "" ||
-            stockQuantity === "" ||
+            brandId === "" ||
             !status ||
             typeId === "" ||
             categoryId === "" ||
-            depotId === ""
+            productDepots.length === 0 ||
+            hasInvalidDepot
         ) {
             alert("Please fill all required fields.");
             return;
@@ -343,20 +474,21 @@ export default function Products() {
                 sku,
                 name,
                 description,
-                brand,
-                price: Number(price),
-                status,
+                brandId: Number(brandId),
+                status: toBackendStatus(status),
                 typeId: Number(typeId),
                 categoryId: Number(categoryId),
-                depotId: Number(depotId),
-                stockQuantity: Number(stockQuantity),
-                available,
+                productDepots: productDepots.map((depot) => ({
+                    depotId: Number(depot.depotId),
+                    stockQuantity: Number(depot.stockQuantity),
+                    costPrice: Number(depot.costPrice),
+                    salePrice: Number(depot.salePrice),
+                    available: depot.available,
+                })),
             };
 
             await createProduct(payload);
-
-            const data: BackendProductDepot[] = await getAllProductDepots();
-            setProducts(data.map(mapBackendProductToFrontend));
+            await loadProducts();
 
             setShowCreateModal(false);
             resetForm();
@@ -371,40 +503,32 @@ export default function Products() {
         setShowDetailsModal(true);
     };
 
-    const handleSaveEditedProduct = async (updatedProduct: ProductRow) => {
+    const handleSaveEditedProduct = async (
+        updatedProduct: ProductRow,
+        updatedDepots: ProductRow[]
+    ) => {
         try {
             const payload = {
                 name: updatedProduct.name,
                 description: updatedProduct.description,
-                brand: updatedProduct.brand,
-                price: Number(updatedProduct.price),
-                status: updatedProduct.status,
+                brandId: Number(updatedProduct.brandId),
+                status: toBackendStatus(updatedProduct.status),
                 typeId: Number(updatedProduct.typeId),
                 categoryId: Number(updatedProduct.categoryId),
-                depotId: Number(updatedProduct.depotId),
-                available: updatedProduct.available,
-                stockQuantity: Number(updatedProduct.stockQuantity),
+                productDepots: updatedDepots.map((depot) => ({
+                    depotId: Number(depot.depotId),
+                    stockQuantity: Number(depot.stockQuantity),
+                    costPrice: Number(depot.costPrice),
+                    salePrice: Number(depot.salePrice),
+                    available: depot.available,
+                })),
             };
 
-            await updateProductDepot(
-                updatedProduct.productId,
-                updatedProduct.depotId,
-                payload
-            );
+            await updateProduct(updatedProduct.productId, payload);
+            await loadProducts();
 
-            const refreshed: BackendProductDepot[] = await getAllProductDepots();
-            const mapped: ProductRow[] = refreshed.map(mapBackendProductToFrontend);
-            setProducts(mapped);
-
-            const refreshedSelected = mapped.find(
-                (product) =>
-                    product.productId === updatedProduct.productId &&
-                    product.depotId === updatedProduct.depotId
-            );
-
-            if (refreshedSelected) {
-                setSelectedProduct(refreshedSelected);
-            }
+            setShowDetailsModal(false);
+            setSelectedProduct(null);
         } catch (err) {
             console.error(err);
             alert("Failed to update product.");
@@ -412,34 +536,38 @@ export default function Products() {
         }
     };
 
-    const categories = useMemo(
-        () => [...new Set(products.map((p) => p.category))],
-        [products]
-    );
-
     const filtered = useMemo(() => {
-        return products.filter((p) => {
+        return activeProducts.filter((p) => {
             const matchesSearch =
                 p.name.toLowerCase().includes(search.toLowerCase()) ||
                 p.sku.toLowerCase().includes(search.toLowerCase()) ||
                 p.brand.toLowerCase().includes(search.toLowerCase());
 
             const matchesCategory =
-                categoryFilter === "all" || p.category === categoryFilter;
+                categoryFilter === "all" || String(p.categoryId) === categoryFilter;
 
-            return matchesSearch && matchesCategory;
+            const matchesBrand =
+                brandFilter === "all" || String(p.brandId) === brandFilter;
+
+            const matchesType =
+                typeFilter === "all" || String(p.typeId) === typeFilter;
+
+            const matchesDepot =
+                depotFilter === "all" || p.depotName === depotFilter;
+
+            return (
+                matchesSearch &&
+                matchesCategory &&
+                matchesBrand &&
+                matchesType &&
+                matchesDepot
+            );
         });
-    }, [products, search, categoryFilter]);
+    }, [activeProducts, search, categoryFilter, brandFilter, typeFilter, depotFilter]);
 
     return (
         <AppLayout>
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: isMobile ? 18 : 24,
-                }}
-            >
+            <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 18 : 24 }}>
                 <div
                     style={{
                         display: "flex",
@@ -509,6 +637,7 @@ export default function Products() {
                             border: "1px solid #d9dee5",
                             padding: "0 16px",
                             background: "#fff",
+                            minWidth: isMobile ? "100%" : 260,
                         }}
                     >
                         <input
@@ -526,26 +655,38 @@ export default function Products() {
                         />
                     </div>
 
-                    <select
-                        value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value)}
-                        style={{
-                            width: isMobile ? "100%" : 260,
-                            height: 50,
-                            borderRadius: 12,
-                            border: "1px solid #d9dee5",
-                            padding: "0 16px",
-                            fontSize: 15,
-                            background: "#fff",
-                            color: "#2d3340",
-                            outline: "none",
-                            boxSizing: "border-box",
-                        }}
-                    >
+                    <select value={brandFilter} onChange={(e) => setBrandFilter(e.target.value)} style={filterStyle(isMobile)}>
+                        <option value="all">All Brands</option>
+                        {brandOptions.map((brand) => (
+                            <option key={brand.id} value={brand.id}>
+                                {brand.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} style={filterStyle(isMobile)}>
                         <option value="all">All Categories</option>
-                        {categories.map((c) => (
-                            <option key={c} value={c}>
-                                {c}
+                        {categoryOptions.map((category) => (
+                            <option key={category.id} value={category.id}>
+                                {category.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={filterStyle(isMobile)}>
+                        <option value="all">All Types</option>
+                        {typeOptions.map((type) => (
+                            <option key={type.id} value={type.id}>
+                                {type.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <select value={depotFilter} onChange={(e) => setDepotFilter(e.target.value)} style={filterStyle(isMobile)}>
+                        <option value="all">All Depots</option>
+                        {depotOptions.map((depot) => (
+                            <option key={depot.name} value={depot.name}>
+                                {depot.name}
                             </option>
                         ))}
                     </select>
@@ -564,19 +705,9 @@ export default function Products() {
                     ) : error ? (
                         <div style={{ padding: 24, color: "#d14343" }}>{error}</div>
                     ) : filtered.length === 0 ? (
-                        <div style={{ padding: 24, color: "#7f8792" }}>
-                            No products found.
-                        </div>
+                        <div style={{ padding: 24, color: "#7f8792" }}>No products found.</div>
                     ) : isMobile ? (
-                        <div
-                            style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 12,
-                                padding: 12,
-                                background: "#f8fafc",
-                            }}
-                        >
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 12, background: "#f8fafc" }}>
                             {filtered.map((product) => (
                                 <div
                                     key={`${product.productId}-${product.depotId}`}
@@ -593,111 +724,28 @@ export default function Products() {
                                         boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
                                     }}
                                 >
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            gap: 10,
-                                        }}
-                                    >
-                                        <div style={{ minWidth: 0 }}>
-                                            <div
-                                                style={{
-                                                    fontSize: 17,
-                                                    fontWeight: 800,
-                                                    color: "#273142",
-                                                    lineHeight: 1.3,
-                                                    wordBreak: "break-word",
-                                                }}
-                                            >
-                                                {product.name}
-                                            </div>
-
-                                            <div
-                                                style={{
-                                                    fontSize: 13,
-                                                    color: "#7b8494",
-                                                    fontWeight: 600,
-                                                    marginTop: 4,
-                                                    wordBreak: "break-word",
-                                                }}
-                                            >
-                                                SKU: {product.sku}
-                                            </div>
+                                    <div>
+                                        <div style={{ fontSize: 17, fontWeight: 800, color: "#273142", lineHeight: 1.3 }}>
+                                            {product.name}
                                         </div>
-
-                                        <div
-                                            style={{
-                                                display: "flex",
-                                                flexWrap: "wrap",
-                                                gap: 8,
-                                            }}
-                                        >
-                                            <StatusPill status={product.status} compact />
-                                            <AvailabilityPill
-                                                available={product.available}
-                                                compact
-                                            />
+                                        <div style={{ fontSize: 13, color: "#7b8494", fontWeight: 600, marginTop: 4 }}>
+                                            SKU: {product.sku}
                                         </div>
                                     </div>
 
-                                    <div
-                                        style={{
-                                            borderTop: "1px solid #f1f3f6",
-                                            paddingTop: 2,
-                                        }}
-                                    >
-                                        <MobileDetailRow
-                                            label="Brand"
-                                            value={product.brand}
-                                        />
-                                        <MobileDetailRow
-                                            label="Category"
-                                            value={product.category}
-                                        />
-                                        <MobileDetailRow
-                                            label="Type"
-                                            value={product.type}
-                                        />
-                                        <MobileDetailRow
-                                            label="Depot"
-                                            value={product.depotName}
-                                        />
-                                        <MobileDetailRow
-                                            label="Price"
-                                            value={formatPrice(product.price)}
-                                        />
-                                        <div
-                                            style={{
-                                                display: "flex",
-                                                justifyContent: "space-between",
-                                                alignItems: "flex-start",
-                                                gap: 12,
-                                                padding: "10px 0 0",
-                                            }}
-                                        >
-                                            <span
-                                                style={{
-                                                    fontSize: 13,
-                                                    color: "#7b8494",
-                                                    fontWeight: 700,
-                                                    flexShrink: 0,
-                                                }}
-                                            >
-                                                Stock
-                                            </span>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                        <StatusPill status={product.status} compact />
+                                        <AvailabilityPill available={product.available} compact />
+                                    </div>
 
-                                            <span
-                                                style={{
-                                                    fontSize: 14,
-                                                    color: "#273142",
-                                                    fontWeight: 700,
-                                                    textAlign: "right",
-                                                }}
-                                            >
-                                                {product.stockQuantity}
-                                            </span>
-                                        </div>
+                                    <div style={{ borderTop: "1px solid #f1f3f6", paddingTop: 2 }}>
+                                        <MobileDetailRow label="Brand" value={product.brand} />
+                                        <MobileDetailRow label="Category" value={product.category} />
+                                        <MobileDetailRow label="Type" value={product.type} />
+                                        <MobileDetailRow label="Depot" value={product.depotName} />
+                                        <MobileDetailRow label="Sale Price" value={formatPrice(product.salePrice)} />
+                                        <MobileDetailRow label="Cost Price" value={formatPrice(product.costPrice)} />
+                                        <MobileDetailRow label="Stock" value={product.stockQuantity} />
                                     </div>
                                 </div>
                             ))}
@@ -707,8 +755,7 @@ export default function Products() {
                             <div
                                 style={{
                                     display: "grid",
-                                    gridTemplateColumns:
-                                        "1.1fr 2fr 1.5fr 1.3fr 1fr 1.3fr 1.2fr 1.2fr 1.5fr 1.3fr",
+                                    gridTemplateColumns: "1.1fr 2fr 1.4fr 1.3fr 1fr 1fr 1.2fr 1.2fr 1.4fr 1.3fr",
                                     gap: 16,
                                     padding: "20px 22px",
                                     borderBottom: "1px solid #eef1f4",
@@ -726,7 +773,7 @@ export default function Products() {
                                 <div>Product</div>
                                 <div>Brand</div>
                                 <div>Category</div>
-                                <div>Price</div>
+                                <div>Sale</div>
                                 <div>Stock</div>
                                 <div>Status</div>
                                 <div>Type</div>
@@ -740,8 +787,7 @@ export default function Products() {
                                     onClick={() => handleOpenDetails(product)}
                                     style={{
                                         display: "grid",
-                                        gridTemplateColumns:
-                                            "1.1fr 2fr 1.5fr 1.3fr 1fr 1.3fr 1.2fr 1.2fr 1.5fr 1.3fr",
+                                        gridTemplateColumns: "1.1fr 2fr 1.4fr 1.3fr 1fr 1fr 1.2fr 1.2fr 1.4fr 1.3fr",
                                         gap: 16,
                                         padding: "22px",
                                         borderBottom: "1px solid #eef1f4",
@@ -750,94 +796,25 @@ export default function Products() {
                                         justifyItems: "center",
                                     }}
                                 >
-                                    <div
-                                        style={{
-                                            fontSize: 16,
-                                            color: "#7b8494",
-                                            lineHeight: 1.4,
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        {product.sku}
-                                    </div>
-
+                                    <div style={{ fontSize: 16, color: "#7b8494", fontWeight: 600 }}>{product.sku}</div>
                                     <div style={{ justifySelf: "start", width: "100%" }}>
-                                        <div
-                                            style={{
-                                                fontSize: 18,
-                                                fontWeight: 700,
-                                                color: "#273142",
-                                                lineHeight: 1.35,
-                                            }}
-                                        >
+                                        <div style={{ fontSize: 18, fontWeight: 700, color: "#273142", lineHeight: 1.35 }}>
                                             {product.name}
                                         </div>
                                     </div>
-
-                                    <div
-                                        style={{
-                                            fontSize: 16,
-                                            color: "#6b7280",
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        {product.brand}
+                                    <div style={cellStyle}>{product.brand}</div>
+                                    <div style={cellStyle}>{product.category}</div>
+                                    <div style={{ fontSize: 16, color: "#273142", fontWeight: 600 }}>
+                                        {formatPrice(product.salePrice)}
                                     </div>
-
-                                    <div
-                                        style={{
-                                            fontSize: 16,
-                                            color: "#6b7280",
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        {product.category}
-                                    </div>
-
-                                    <div
-                                        style={{
-                                            fontSize: 16,
-                                            color: "#273142",
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        {formatPrice(product.price)}
-                                    </div>
-
-                                    <div
-                                        style={{
-                                            fontSize: 16,
-                                            color: "#273142",
-                                            fontWeight: 600,
-                                        }}
-                                    >
+                                    <div style={{ fontSize: 16, color: "#273142", fontWeight: 600 }}>
                                         {product.stockQuantity}
                                     </div>
-
                                     <div>
                                         <StatusPill status={product.status} />
                                     </div>
-
-                                    <div
-                                        style={{
-                                            fontSize: 15,
-                                            color: "#6b7280",
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        {product.type}
-                                    </div>
-
-                                    <div
-                                        style={{
-                                            fontSize: 15,
-                                            color: "#6b7280",
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        {product.depotName}
-                                    </div>
-
+                                    <div style={cellStyle}>{product.type}</div>
+                                    <div style={cellStyle}>{product.depotName}</div>
                                     <div>
                                         <AvailabilityPill available={product.available} />
                                     </div>
@@ -851,23 +828,53 @@ export default function Products() {
             <CreateProductModal
                 open={showCreateModal}
                 formData={newProduct}
+                brands={brandOptions}
+                types={typeOptions}
+                categories={categoryOptions}
+                depots={depotOptions}
                 onClose={() => {
                     setShowCreateModal(false);
                     resetForm();
                 }}
                 onChange={handleProductFormChange}
+                onDepotChange={handleDepotChange}
+                onAddDepot={handleAddDepot}
+                onRemoveDepot={handleRemoveDepot}
                 onSubmit={handleCreateProduct}
             />
 
             <ProductDetailsModal
                 open={showDetailsModal}
                 product={selectedProduct}
+                allProducts={activeProducts}
                 onClose={() => setShowDetailsModal(false)}
                 onSave={handleSaveEditedProduct}
-                typeOptions={TYPE_OPTIONS}
-                categoryOptions={CATEGORY_OPTIONS}
-                depotOptions={DEPOT_OPTIONS}
+                brandOptions={brandOptions}
+                typeOptions={typeOptions}
+                categoryOptions={categoryOptions}
+                depotOptions={depotOptions}
             />
         </AppLayout>
     );
 }
+
+function filterStyle(isMobile: boolean): React.CSSProperties {
+    return {
+        width: isMobile ? "100%" : 210,
+        height: 50,
+        borderRadius: 12,
+        border: "1px solid #d9dee5",
+        padding: "0 16px",
+        fontSize: 15,
+        background: "#fff",
+        color: "#2d3340",
+        outline: "none",
+        boxSizing: "border-box",
+    };
+}
+
+const cellStyle: React.CSSProperties = {
+    fontSize: 15,
+    color: "#6b7280",
+    fontWeight: 500,
+};

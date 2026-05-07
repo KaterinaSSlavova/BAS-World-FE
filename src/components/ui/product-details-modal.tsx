@@ -1,11 +1,13 @@
-import { CSSProperties, useEffect, useState } from "react";
+import { CSSProperties, useEffect, useMemo, useState } from "react";
 import type { ProductRow, SelectOption } from "../../pages/Products";
 
 interface ProductDetailsModalProps {
     open: boolean;
     product: ProductRow | null;
+    allProducts: ProductRow[];
     onClose: () => void;
-    onSave: (updatedProduct: ProductRow) => Promise<void>;
+    onSave: (updatedProduct: ProductRow, updatedDepots: ProductRow[]) => Promise<void>;
+    brandOptions: SelectOption[];
     typeOptions: SelectOption[];
     categoryOptions: SelectOption[];
     depotOptions: SelectOption[];
@@ -14,7 +16,7 @@ interface ProductDetailsModalProps {
 const overlayStyle: CSSProperties = {
     position: "fixed",
     inset: 0,
-    background: "rgba(15, 23, 42, 0.35)",
+    background: "rgba(15, 23, 42, 0.45)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -24,30 +26,36 @@ const overlayStyle: CSSProperties = {
 
 const modalStyle: CSSProperties = {
     width: "100%",
-    maxWidth: 720,
+    maxWidth: 900,
     maxHeight: "90vh",
-    background: "#fff",
-    borderRadius: 16,
-    boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
-    border: "1px solid #e5ebe5",
+    background: "#ffffff",
+    borderRadius: 18,
+    boxShadow: "0 24px 60px rgba(0,0,0,0.22)",
+    border: "1px solid #d9e2d9",
     overflow: "hidden",
     display: "flex",
     flexDirection: "column",
+    color: "#111827",
 };
 
-const sectionStyle: CSSProperties = {
-    padding: 20,
+const sectionStyle: CSSProperties = { padding: 18 };
+
+const labelStyle: CSSProperties = {
+    fontSize: 13,
+    fontWeight: 800,
+    color: "#1f2937",
+    marginBottom: 6,
 };
 
 const inputStyle: CSSProperties = {
     width: "100%",
-    height: 46,
-    border: "1px solid #dfe5df",
+    height: 40,
+    border: "1px solid #cfd8cf",
     borderRadius: 10,
-    padding: "0 14px",
+    padding: "0 12px",
     fontSize: 14,
-    color: "#2d3340",
-    background: "#fff",
+    color: "#111827",
+    background: "#ffffff",
     boxSizing: "border-box",
     outline: "none",
     fontFamily: "inherit",
@@ -55,20 +63,20 @@ const inputStyle: CSSProperties = {
 
 const readOnlyStyle: CSSProperties = {
     ...inputStyle,
-    background: "#f8faf8",
-    color: "#667085",
-    cursor: "default",
+    background: "#f9fafb",
+    color: "#374151",
 };
 
 const textareaStyle: CSSProperties = {
     width: "100%",
-    minHeight: 96,
-    border: "1px solid #dfe5df",
+    minHeight: 58,
+    maxHeight: 84,
+    border: "1px solid #cfd8cf",
     borderRadius: 10,
-    padding: "12px 14px",
+    padding: "10px 12px",
     fontSize: 14,
-    color: "#2d3340",
-    background: "#fff",
+    color: "#111827",
+    background: "#ffffff",
     boxSizing: "border-box",
     outline: "none",
     fontFamily: "inherit",
@@ -77,58 +85,104 @@ const textareaStyle: CSSProperties = {
 
 const readOnlyTextareaStyle: CSSProperties = {
     ...textareaStyle,
-    background: "#f8faf8",
-    color: "#667085",
-    cursor: "default",
+    background: "#f9fafb",
+    color: "#374151",
 };
 
-const labelStyle: CSSProperties = {
+const secondaryButtonStyle: CSSProperties = {
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: "1px solid #d1d5db",
+    background: "#ffffff",
+    color: "#111827",
     fontSize: 14,
-    fontWeight: 600,
-    color: "#2d3340",
-    marginBottom: 8,
+    fontWeight: 800,
+    cursor: "pointer",
+};
+
+const primaryButtonStyle: CSSProperties = {
+    padding: "10px 16px",
+    borderRadius: 10,
+    border: "none",
+    background: "#15803d",
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: 800,
+    cursor: "pointer",
+};
+
+const disabledButtonStyle: CSSProperties = {
+    ...secondaryButtonStyle,
+    background: "#f3f4f6",
+    color: "#9ca3af",
+    cursor: "not-allowed",
 };
 
 export default function ProductDetailsModal({
                                                 open,
                                                 product,
+                                                allProducts,
                                                 onClose,
                                                 onSave,
+                                                brandOptions,
                                                 typeOptions,
                                                 categoryOptions,
-                                                depotOptions,
                                             }: ProductDetailsModalProps) {
-    const [isEditing, setIsEditing] = useState(false);
+    const productDepotRows = useMemo(() => {
+        if (!product) return [];
+        return allProducts.filter((row) => row.productId === product.productId);
+    }, [allProducts, product]);
+
+    const [isProductEditing, setIsProductEditing] = useState(false);
+    const [editingDepotId, setEditingDepotId] = useState<number | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [formData, setFormData] = useState<ProductRow | null>(product);
+    const [productForm, setProductForm] = useState<ProductRow | null>(product);
+    const [depotForms, setDepotForms] = useState<ProductRow[]>(productDepotRows);
 
     useEffect(() => {
-        setFormData(product);
-        setIsEditing(false);
+        setProductForm(product);
+        setDepotForms(productDepotRows);
+        setIsProductEditing(false);
+        setEditingDepotId(null);
         setIsSaving(false);
-    }, [product, open]);
+    }, [product, open, productDepotRows]);
 
-    if (!open || !product || !formData) return null;
+    if (!open || !product || !productForm) return null;
 
-    const handleChange = <K extends keyof ProductRow>(
+    const handleProductChange = <K extends keyof ProductRow>(
         field: K,
         value: ProductRow[K]
     ) => {
-        setFormData((prev) => (prev ? { ...prev, [field]: value } : prev));
+        setProductForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+    };
+
+    const handleDepotChange = <K extends keyof ProductRow>(
+        depotId: number,
+        field: K,
+        value: ProductRow[K]
+    ) => {
+        setDepotForms((prev) =>
+            prev.map((row) =>
+                row.depotId === depotId ? { ...row, [field]: value } : row
+            )
+        );
+    };
+
+    const handleBrandChange = (newBrandId: number) => {
+        const selected = brandOptions.find((option) => option.id === newBrandId);
+        if (!selected) return;
+
+        setProductForm((prev) =>
+            prev ? { ...prev, brandId: selected.id, brand: selected.name } : prev
+        );
     };
 
     const handleTypeChange = (newTypeId: number) => {
         const selected = typeOptions.find((option) => option.id === newTypeId);
         if (!selected) return;
 
-        setFormData((prev) =>
-            prev
-                ? {
-                    ...prev,
-                    typeId: selected.id,
-                    type: selected.name,
-                }
-                : prev
+        setProductForm((prev) =>
+            prev ? { ...prev, typeId: selected.id, type: selected.name } : prev
         );
     };
 
@@ -136,37 +190,32 @@ export default function ProductDetailsModal({
         const selected = categoryOptions.find((option) => option.id === newCategoryId);
         if (!selected) return;
 
-        setFormData((prev) =>
-            prev
-                ? {
-                    ...prev,
-                    categoryId: selected.id,
-                    category: selected.name,
-                }
-                : prev
+        setProductForm((prev) =>
+            prev ? { ...prev, categoryId: selected.id, category: selected.name } : prev
         );
     };
 
-    const handleDepotChange = (newDepotId: number) => {
-        const selected = depotOptions.find((option) => option.id === newDepotId);
-        if (!selected) return;
+    const handleCancelProductEdit = () => {
+        setProductForm(product);
+        setIsProductEditing(false);
+    };
 
-        setFormData((prev) =>
-            prev
-                ? {
-                    ...prev,
-                    depotId: selected.id,
-                    depotName: selected.name,
-                }
-                : prev
+    const handleCancelDepotEdit = (depotId: number) => {
+        const originalRow = productDepotRows.find((row) => row.depotId === depotId);
+        if (!originalRow) return;
+
+        setDepotForms((prev) =>
+            prev.map((row) => (row.depotId === depotId ? originalRow : row))
         );
+        setEditingDepotId(null);
     };
 
     const handleSave = async () => {
         try {
             setIsSaving(true);
-            await onSave(formData);
-            setIsEditing(false);
+            await onSave(productForm, depotForms);
+            setIsProductEditing(false);
+            setEditingDepotId(null);
             onClose();
         } finally {
             setIsSaving(false);
@@ -181,267 +230,335 @@ export default function ProductDetailsModal({
                         ...sectionStyle,
                         borderBottom: "1px solid #edf1ed",
                         display: "flex",
-                        alignItems: "flex-start",
                         justifyContent: "space-between",
+                        alignItems: "flex-start",
                         gap: 16,
-                        flexShrink: 0,
                     }}
                 >
                     <div>
-                        <h2
-                            style={{
-                                margin: 0,
-                                fontSize: 24,
-                                fontWeight: 700,
-                                color: "#1a1a1a",
-                            }}
-                        >
-                            Product Details
+                        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#111827" }}>
+                            {productForm.name || "Product Details"}
                         </h2>
-                        <p
-                            style={{
-                                margin: "6px 0 0",
-                                fontSize: 14,
-                                color: "#7f8792",
-                            }}
-                        >
-                            View and edit product information
+                        <p style={{ margin: "6px 0 0", fontSize: 14, color: "#4b5563", fontWeight: 500 }}>
+                            Edit product details and depot-specific availability.
                         </p>
                     </div>
 
                     <button
+                        type="button"
                         onClick={onClose}
                         style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: 8,
-                            border: "1px solid #d8dfd8",
-                            background: "#fff",
-                            color: "#667085",
+                            ...secondaryButtonStyle,
+                            width: 36,
+                            height: 36,
+                            padding: 0,
                             fontSize: 18,
-                            lineHeight: 1,
-                            cursor: "pointer",
-                            flexShrink: 0,
                         }}
                     >
                         ×
                     </button>
                 </div>
 
-                <div
-                    style={{
-                        ...sectionStyle,
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: 18,
-                        overflowY: "auto",
-                        flex: 1,
-                    }}
-                >
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>SKU</label>
-                        <input value={formData.sku} readOnly style={readOnlyStyle} />
+                <div style={{ ...sectionStyle, overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div style={{ border: "1px solid #e5ebe5", borderRadius: 14, padding: 14, background: "#ffffff" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 12 }}>
+                            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: "#111827" }}>
+                                Product Information
+                            </h3>
+
+                            {!isProductEditing ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsProductEditing(true)}
+                                    disabled={isSaving}
+                                    style={isSaving ? disabledButtonStyle : secondaryButtonStyle}
+                                >
+                                    Edit Product
+                                </button>
+                            ) : (
+                                <div style={{ display: "flex", gap: 8 }}>
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelProductEdit}
+                                        disabled={isSaving}
+                                        style={isSaving ? disabledButtonStyle : secondaryButtonStyle}
+                                    >
+                                        Cancel
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleSave}
+                                        disabled={isSaving}
+                                        style={{
+                                            ...primaryButtonStyle,
+                                            background: isSaving ? "#9ca3af" : "#15803d",
+                                            cursor: isSaving ? "not-allowed" : "pointer",
+                                        }}
+                                    >
+                                        {isSaving ? "Saving..." : "Save Product"}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <label style={labelStyle}>SKU</label>
+                                <input value={productForm.sku} readOnly style={readOnlyStyle} />
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <label style={labelStyle}>Product Name</label>
+                                <input
+                                    value={productForm.name}
+                                    readOnly={!isProductEditing}
+                                    onChange={(e) => handleProductChange("name", e.target.value)}
+                                    style={isProductEditing ? inputStyle : readOnlyStyle}
+                                />
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <label style={labelStyle}>Brand</label>
+                                {isProductEditing ? (
+                                    <select
+                                        value={productForm.brandId}
+                                        onChange={(e) => handleBrandChange(Number(e.target.value))}
+                                        style={inputStyle}
+                                    >
+                                        {brandOptions.map((option) => (
+                                            <option key={option.id} value={option.id}>
+                                                {option.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input value={productForm.brand} readOnly style={readOnlyStyle} />
+                                )}
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <label style={labelStyle}>Category</label>
+                                {isProductEditing ? (
+                                    <select
+                                        value={productForm.categoryId}
+                                        onChange={(e) => handleCategoryChange(Number(e.target.value))}
+                                        style={inputStyle}
+                                    >
+                                        {categoryOptions.map((option) => (
+                                            <option key={option.id} value={option.id}>
+                                                {option.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input value={productForm.category} readOnly style={readOnlyStyle} />
+                                )}
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <label style={labelStyle}>Type</label>
+                                {isProductEditing ? (
+                                    <select
+                                        value={productForm.typeId}
+                                        onChange={(e) => handleTypeChange(Number(e.target.value))}
+                                        style={inputStyle}
+                                    >
+                                        {typeOptions.map((option) => (
+                                            <option key={option.id} value={option.id}>
+                                                {option.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input value={productForm.type} readOnly style={readOnlyStyle} />
+                                )}
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <label style={labelStyle}>Status</label>
+                                <select
+                                    value={productForm.status}
+                                    disabled={!isProductEditing}
+                                    onChange={(e) => handleProductChange("status", e.target.value)}
+                                    style={isProductEditing ? inputStyle : readOnlyStyle}
+                                >
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="INACTIVE">Inactive</option>
+                                    <option value="DRAFT">Draft</option>
+                                    <option value="ARCHIVED">Archived</option>
+                                </select>
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column", gridColumn: "1 / -1" }}>
+                                <label style={labelStyle}>Description</label>
+                                <textarea
+                                    value={productForm.description}
+                                    readOnly={!isProductEditing}
+                                    onChange={(e) => handleProductChange("description", e.target.value)}
+                                    style={isProductEditing ? textareaStyle : readOnlyTextareaStyle}
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Product Name</label>
-                        <input
-                            value={formData.name}
-                            readOnly={!isEditing}
-                            onChange={(e) => handleChange("name", e.target.value)}
-                            style={isEditing ? inputStyle : readOnlyStyle}
-                        />
-                    </div>
+                    <div style={{ border: "2px solid #b9dec6", borderRadius: 16, padding: 16, background: "#fbfffc" }}>
+                        <div style={{ marginBottom: 14 }}>
+                            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: "#111827" }}>
+                                Depot Details
+                            </h3>
+                            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#4b5563", fontWeight: 500 }}>
+                                Manage stock, pricing and availability for each depot.
+                            </p>
+                        </div>
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Brand</label>
-                        <input
-                            value={formData.brand}
-                            readOnly={!isEditing}
-                            onChange={(e) => handleChange("brand", e.target.value)}
-                            style={isEditing ? inputStyle : readOnlyStyle}
-                        />
-                    </div>
+                        {depotForms.map((depotRow) => {
+                            const isDepotEditing = editingDepotId === depotRow.depotId;
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Category</label>
-                        {isEditing ? (
-                            <select
-                                value={formData.categoryId}
-                                onChange={(e) => handleCategoryChange(Number(e.target.value))}
-                                style={inputStyle}
-                            >
-                                {categoryOptions.map((option) => (
-                                    <option key={option.id} value={option.id}>
-                                        {option.name}
-                                    </option>
-                                ))}
-                            </select>
-                        ) : (
-                            <input value={formData.category} readOnly style={readOnlyStyle} />
-                        )}
-                    </div>
+                            return (
+                                <div
+                                    key={depotRow.depotId}
+                                    style={{
+                                        border: "1px solid #d9e2d9",
+                                        borderRadius: 14,
+                                        padding: 14,
+                                        marginBottom: 12,
+                                        background: "#ffffff",
+                                        boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
+                                    }}
+                                >
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                                        <h4 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: "#111827" }}>
+                                            {depotRow.depotName}
+                                        </h4>
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Price</label>
-                        <input
-                            type="number"
-                            value={formData.price}
-                            readOnly={!isEditing}
-                            onChange={(e) => handleChange("price", Number(e.target.value))}
-                            style={isEditing ? inputStyle : readOnlyStyle}
-                        />
-                    </div>
+                                        {!isDepotEditing ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditingDepotId(depotRow.depotId)}
+                                                disabled={isSaving || editingDepotId !== null}
+                                                style={isSaving || editingDepotId !== null ? disabledButtonStyle : secondaryButtonStyle}
+                                            >
+                                                Edit Depot
+                                            </button>
+                                        ) : (
+                                            <div style={{ display: "flex", gap: 8 }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleCancelDepotEdit(depotRow.depotId)}
+                                                    disabled={isSaving}
+                                                    style={isSaving ? disabledButtonStyle : secondaryButtonStyle}
+                                                >
+                                                    Cancel
+                                                </button>
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Stock Quantity</label>
-                        <input
-                            type="number"
-                            value={formData.stockQuantity}
-                            readOnly={!isEditing}
-                            onChange={(e) =>
-                                handleChange("stockQuantity", Number(e.target.value))
-                            }
-                            style={isEditing ? inputStyle : readOnlyStyle}
-                        />
-                    </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSave}
+                                                    disabled={isSaving}
+                                                    style={{
+                                                        ...primaryButtonStyle,
+                                                        background: isSaving ? "#9ca3af" : "#15803d",
+                                                        cursor: isSaving ? "not-allowed" : "pointer",
+                                                    }}
+                                                >
+                                                    {isSaving ? "Saving..." : "Save"}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Status</label>
-                        <select
-                            value={formData.status}
-                            disabled={!isEditing}
-                            onChange={(e) => handleChange("status", e.target.value)}
-                            style={isEditing ? inputStyle : readOnlyStyle}
-                        >
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                            <option value="Draft">Draft</option>
-                            <option value="Archived">Archived</option>
-                        </select>
-                    </div>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr", gap: 12 }}>
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <label style={labelStyle}>Depot</label>
+                                            <input value={depotRow.depotName} readOnly style={readOnlyStyle} />
+                                        </div>
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Type</label>
-                        {isEditing ? (
-                            <select
-                                value={formData.typeId}
-                                onChange={(e) => handleTypeChange(Number(e.target.value))}
-                                style={inputStyle}
-                            >
-                                {typeOptions.map((option) => (
-                                    <option key={option.id} value={option.id}>
-                                        {option.name}
-                                    </option>
-                                ))}
-                            </select>
-                        ) : (
-                            <input value={formData.type} readOnly style={readOnlyStyle} />
-                        )}
-                    </div>
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <label style={labelStyle}>Stock</label>
+                                            <input
+                                                type="number"
+                                                value={depotRow.stockQuantity}
+                                                readOnly={!isDepotEditing}
+                                                onChange={(e) =>
+                                                    handleDepotChange(depotRow.depotId, "stockQuantity", Number(e.target.value))
+                                                }
+                                                style={isDepotEditing ? inputStyle : readOnlyStyle}
+                                            />
+                                        </div>
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Depot</label>
-                        {isEditing ? (
-                            <select
-                                value={formData.depotId}
-                                onChange={(e) => handleDepotChange(Number(e.target.value))}
-                                style={inputStyle}
-                            >
-                                {depotOptions.map((option) => (
-                                    <option key={option.id} value={option.id}>
-                                        {option.name}
-                                    </option>
-                                ))}
-                            </select>
-                        ) : (
-                            <input value={formData.depotName} readOnly style={readOnlyStyle} />
-                        )}
-                    </div>
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <label style={labelStyle}>Cost Price</label>
+                                            <input
+                                                type="number"
+                                                value={depotRow.costPrice}
+                                                readOnly={!isDepotEditing}
+                                                onChange={(e) =>
+                                                    handleDepotChange(depotRow.depotId, "costPrice", Number(e.target.value))
+                                                }
+                                                style={isDepotEditing ? inputStyle : readOnlyStyle}
+                                            />
+                                        </div>
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={labelStyle}>Availability</label>
-                        <label
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 10,
-                                fontSize: 14,
-                                color: "#2d3340",
-                                height: 46,
-                            }}
-                        >
-                            <input
-                                type="checkbox"
-                                checked={formData.available}
-                                disabled={!isEditing}
-                                onChange={(e) =>
-                                    handleChange("available", e.target.checked)
-                                }
-                            />
-                            Available
-                        </label>
-                    </div>
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <label style={labelStyle}>Sale Price</label>
+                                            <input
+                                                type="number"
+                                                value={depotRow.salePrice}
+                                                readOnly={!isDepotEditing}
+                                                onChange={(e) =>
+                                                    handleDepotChange(depotRow.depotId, "salePrice", Number(e.target.value))
+                                                }
+                                                style={isDepotEditing ? inputStyle : readOnlyStyle}
+                                            />
+                                        </div>
+                                    </div>
 
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gridColumn: "1 / -1",
-                        }}
-                    >
-                        <label style={labelStyle}>Description</label>
-                        <textarea
-                            value={formData.description}
-                            readOnly={!isEditing}
-                            onChange={(e) => handleChange("description", e.target.value)}
-                            style={isEditing ? textareaStyle : readOnlyTextareaStyle}
-                        />
+                                    <div
+                                        style={{
+                                            marginTop: 12,
+                                            paddingTop: 12,
+                                            borderTop: "1px solid #edf1ed",
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <label
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 10,
+                                                fontSize: 14,
+                                                fontWeight: 800,
+                                                color: "#111827",
+                                            }}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={depotRow.available}
+                                                disabled={!isDepotEditing}
+                                                onChange={(e) =>
+                                                    handleDepotChange(depotRow.depotId, "available", e.target.checked)
+                                                }
+                                            />
+                                            Available in this depot
+                                        </label>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
-                <div
-                    style={{
-                        padding: "16px 20px",
-                        borderTop: "1px solid #edf1ed",
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: 12,
-                        flexShrink: 0,
-                    }}
-                >
+                <div style={{ padding: "14px 18px", borderTop: "1px solid #edf1ed", display: "flex", justifyContent: "flex-end", gap: 12, background: "#ffffff" }}>
                     <button
-                        onClick={() => setIsEditing(true)}
-                        disabled={isEditing || isSaving}
-                        style={{
-                            padding: "12px 18px",
-                            borderRadius: 10,
-                            border: "1px solid #d8dfd8",
-                            background: isEditing ? "#f4f6f4" : "#fff",
-                            color: isEditing ? "#98a2b3" : "#2d3340",
-                            fontSize: 14,
-                            fontWeight: 600,
-                            cursor: isEditing || isSaving ? "not-allowed" : "pointer",
-                        }}
+                        type="button"
+                        onClick={onClose}
+                        disabled={isSaving}
+                        style={isSaving ? disabledButtonStyle : secondaryButtonStyle}
                     >
-                        Edit
-                    </button>
-
-                    <button
-                        onClick={handleSave}
-                        disabled={!isEditing || isSaving}
-                        style={{
-                            padding: "12px 18px",
-                            borderRadius: 10,
-                            border: "none",
-                            background: !isEditing || isSaving ? "#b8c2b8" : "#2e9d5b",
-                            color: "#fff",
-                            fontSize: 14,
-                            fontWeight: 700,
-                            cursor: !isEditing || isSaving ? "not-allowed" : "pointer",
-                        }}
-                    >
-                        {isSaving ? "Saving..." : "Save"}
+                        Close
                     </button>
                 </div>
             </div>

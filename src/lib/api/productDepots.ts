@@ -2,20 +2,16 @@ import { api } from "./axios";
 
 // GET all products (with depot info)
 export const getAllProductDepots = async () => {
-    const response = await api.get("/product-depots");
+    const response = await api.get("/products/with-depots");
     return response.data;
 };
 
 // UPDATE product in a specific depot
-export const updateProductDepot = async (
+export const updateProduct = async (
     productId: number,
-    depotId: number,
     data: any
 ) => {
-    const response = await api.put(
-        `/product-depots/${productId}/depots/${depotId}`,
-        data
-    );
+    const response = await api.put(`/products/${productId}`, data);
     return response.data;
 };
 
