@@ -1,7 +1,13 @@
 import { api } from "./axios";
+import { getAllProductDepots } from "./productDepots";
 
 export const getDepotOverview = async () => {
     const response = await api.get("/depots");
+    return response.data;
+};
+
+export const getAllDepots = async () => {
+    const response = await api.get("/depots/all");
     return response.data;
 };
 
@@ -24,10 +30,7 @@ export const archiveDepot = async (id: number) => {
     await api.put(`/depots/${id}/archive`);
 };
 
-import { getAllProductDepots } from "./productDepots";
-
-export const getProductsForDepot = async (depotId) => {
+export const getProductsForDepot = async (depotId: number) => {
     const data = await getAllProductDepots();
-    console.log("raw:", data);
-    return data.filter((pd) => pd.depotId == depotId);
+    return data.filter((pd: any) => pd.depotId === depotId);
 };
