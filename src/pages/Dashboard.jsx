@@ -5,14 +5,18 @@ import AppLayout from "../components/AppLayout";
 import StatCard from "../components/StatCard";
 
 function mapProduct(item) {
+    const product = item.product ?? {};
+    const firstDepot = item.depots?.[0] ?? {};
+
     return {
-        sku: item.sku,
-        name: item.productName,
-        category: item.category,
-        price: Number(item.price),
-        status: item.status,
-        available: Boolean(item.available),
-        depotName: item.depotName,
+        sku: product.sku ?? "",
+        name: product.name ?? "Unknown product",
+        category: product.category?.name ?? "Unknown",
+        price: Number(firstDepot.salePrice ?? 0),
+        stockQuantity: Number(firstDepot.stockQuantity ?? 0),
+        status: product.status ?? "UNKNOWN",
+        available: Boolean(firstDepot.available),
+        depotName: firstDepot.depot?.depotName ?? "Unknown depot",
     };
 }
 
@@ -21,7 +25,16 @@ function formatPrice(value) {
         style: "currency",
         currency: "EUR",
         maximumFractionDigits: 0,
-    }).format(value);
+    }).format(Number(value ?? 0));
+}
+
+function isActive(status) {
+    return (status ?? "").toUpperCase() === "ACTIVE";
+}
+
+function formatStatus(status) {
+    const safeStatus = status ?? "UNKNOWN";
+    return safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1).toLowerCase();
 }
 
 export default function Dashboard() {
@@ -45,12 +58,14 @@ export default function Dashboard() {
             try {
                 setLoading(true);
                 setError("");
+
                 const [productData, depotData] = await Promise.all([
                     getAllProductDepots(),
                     getDepotOverview(),
                 ]);
-                setProducts(productData.map(mapProduct));
-                setDepots(depotData.depots ?? []);
+
+                setProducts((productData ?? []).map(mapProduct));
+                setDepots(depotData?.depots ?? []);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load dashboard data.");
@@ -58,53 +73,78 @@ export default function Dashboard() {
                 setLoading(false);
             }
         };
+
         void load();
     }, []);
 
     const activeCount = useMemo(
-        () => products.filter(p => p.status.toUpperCase() === "ACTIVE").length,
+        () => products.filter((p) => isActive(p.status)).length,
         [products]
     );
+
     const unavailableCount = useMemo(
-        () => products.filter(p => !p.available).length,
+        () => products.filter((p) => !p.available).length,
         [products]
     );
+
     const lowStockCount = useMemo(
-        () => products.filter(p => p.status.toUpperCase() === "LOW_STOCK").length,
+        () => products.filter((p) => Number(p.stockQuantity ?? 0) < 10).length,
         [products]
     );
+
     const inventoryValue = useMemo(
-        () => products.reduce((sum, p) => sum + p.price, 0),
+        () => products.reduce((sum, p) => sum + Number(p.price ?? 0), 0),
         [products]
     );
 
     if (loading) {
-        return <AppLayout><div style={{ padding: 40, color: "#7f8792" }}>Loading...</div></AppLayout>;
+        return (
+            <AppLayout>
+                <div style={{ padding: 40, color: "#7f8792" }}>Loading...</div>
+            </AppLayout>
+        );
     }
 
     if (error) {
-        return <AppLayout><div style={{ padding: 40, color: "#d14343" }}>{error}</div></AppLayout>;
+        return (
+            <AppLayout>
+                <div style={{ padding: 40, color: "#d14343" }}>{error}</div>
+            </AppLayout>
+        );
     }
 
     return (
         <AppLayout>
-            {/* Header */}
             <div style={{ marginBottom: 28 }}>
-                <h1 style={{ fontSize: isMobile ? 24 : 28, fontWeight: 800, color: "#1f2937", margin: 0 }}>
+                <h1
+                    style={{
+                        fontSize: isMobile ? 24 : 28,
+                        fontWeight: 800,
+                        color: "#1f2937",
+                        margin: 0,
+                    }}
+                >
                     Dashboard
                 </h1>
-                <p style={{ color: "#7f8792", margin: "4px 0 0", fontSize: isMobile ? 14 : 16 }}>
+                <p
+                    style={{
+                        color: "#7f8792",
+                        margin: "4px 0 0",
+                        fontSize: isMobile ? 14 : 16,
+                    }}
+                >
                     Cross-sell product management overview
                 </p>
             </div>
 
-            {/* Stat Cards */}
-            <div style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
-                gap: 16,
-                marginBottom: 28,
-            }}>
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
+                    gap: 16,
+                    marginBottom: 28,
+                }}
+            >
                 <StatCard
                     label="ACTIVE PRODUCTS"
                     value={String(activeCount)}
@@ -131,32 +171,52 @@ export default function Dashboard() {
                 />
             </div>
 
-            {/* Bottom panels — stack on mobile */}
-            <div style={{
-                display: "flex",
-                flexDirection: isMobile ? "column" : "row",
-                gap: 20,
-            }}>
-                {/* Recent Products */}
-                <div style={{
-                    flex: 2,
-                    background: "#fff",
-                    border: "1px solid #e6eaef",
-                    borderRadius: 18,
-                    overflow: "hidden",
-                }}>
-                    <div style={{ padding: "20px 24px", borderBottom: "1px solid #eef1f4" }}>
-                        <h2 style={{ fontSize: 15, fontWeight: 700, color: "#1f2937", margin: 0 }}>
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: isMobile ? "column" : "row",
+                    gap: 20,
+                }}
+            >
+                <div
+                    style={{
+                        flex: 2,
+                        background: "#fff",
+                        border: "1px solid #e6eaef",
+                        borderRadius: 18,
+                        overflow: "hidden",
+                    }}
+                >
+                    <div
+                        style={{
+                            padding: "20px 24px",
+                            borderBottom: "1px solid #eef1f4",
+                        }}
+                    >
+                        <h2
+                            style={{
+                                fontSize: 15,
+                                fontWeight: 700,
+                                color: "#1f2937",
+                                margin: 0,
+                            }}
+                        >
                             Recent Products
                         </h2>
                     </div>
 
                     {isMobile ? (
-                        /* Mobile: card list */
-                        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12 }}>
-                            {products.slice(0, 8).map((p) => (
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 10,
+                                padding: 12,
+                            }}
+                        >
+                            {products.slice(0, 8).map((p, index) => (
                                 <div
-                                    key={p.sku}
+                                    key={`${p.sku}-${p.depotName}-${index}`}
                                     style={{
                                         border: "1px solid #eef1f4",
                                         borderRadius: 12,
@@ -166,84 +226,166 @@ export default function Dashboard() {
                                         gap: 6,
                                     }}
                                 >
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                        <div style={{ fontSize: 14, fontWeight: 700, color: "#273142", flex: 1, marginRight: 8 }}>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "flex-start",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                fontSize: 14,
+                                                fontWeight: 700,
+                                                color: "#273142",
+                                                flex: 1,
+                                                marginRight: 8,
+                                            }}
+                                        >
                                             {p.name}
                                         </div>
-                                        <span style={{
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            padding: "4px 10px",
-                                            borderRadius: 999,
-                                            fontSize: 11,
-                                            fontWeight: 700,
-                                            background: p.status.toUpperCase() === "ACTIVE" ? "#e8f5ec" : "#f3f4f6",
-                                            color: p.status.toUpperCase() === "ACTIVE" ? "#2e9d5b" : "#6b7280",
-                                            border: p.status.toUpperCase() === "ACTIVE" ? "1px solid #b9dec6" : "1px solid #d1d5db",
-                                            whiteSpace: "nowrap",
-                                        }}>
-                                            {p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase()}
+
+                                        <span
+                                            style={{
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                padding: "4px 10px",
+                                                borderRadius: 999,
+                                                fontSize: 11,
+                                                fontWeight: 700,
+                                                background: isActive(p.status)
+                                                    ? "#e8f5ec"
+                                                    : "#f3f4f6",
+                                                color: isActive(p.status)
+                                                    ? "#2e9d5b"
+                                                    : "#6b7280",
+                                                border: isActive(p.status)
+                                                    ? "1px solid #b9dec6"
+                                                    : "1px solid #d1d5db",
+                                                whiteSpace: "nowrap",
+                                            }}
+                                        >
+                                            {formatStatus(p.status)}
                                         </span>
                                     </div>
-                                    <div style={{ fontSize: 12, color: "#7b8494", fontWeight: 600 }}>SKU: {p.sku}</div>
+
+                                    <div
+                                        style={{
+                                            fontSize: 12,
+                                            color: "#7b8494",
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        SKU: {p.sku}
+                                    </div>
+
                                     <div style={{ display: "flex", gap: 16 }}>
-                                        <div style={{ fontSize: 12, color: "#6b7280" }}>{p.category}</div>
-                                        <div style={{ fontSize: 13, fontWeight: 600, color: "#273142" }}>{formatPrice(p.price)}</div>
+                                        <div style={{ fontSize: 12, color: "#6b7280" }}>
+                                            {p.category}
+                                        </div>
+                                        <div
+                                            style={{
+                                                fontSize: 13,
+                                                fontWeight: 600,
+                                                color: "#273142",
+                                            }}
+                                        >
+                                            {formatPrice(p.price)}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        /* Desktop: table */
                         <>
-                            <div style={{
-                                display: "grid",
-                                gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr",
-                                gap: 12,
-                                padding: "12px 24px",
-                                background: "#fbfcfd",
-                                borderBottom: "1px solid #eef1f4",
-                                fontSize: 11,
-                                fontWeight: 800,
-                                color: "#7b8494",
-                                textTransform: "uppercase",
-                                letterSpacing: "0.08em",
-                            }}>
+                            <div
+                                style={{
+                                    display: "grid",
+                                    gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr",
+                                    gap: 12,
+                                    padding: "12px 24px",
+                                    background: "#fbfcfd",
+                                    borderBottom: "1px solid #eef1f4",
+                                    fontSize: 11,
+                                    fontWeight: 800,
+                                    color: "#7b8494",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.08em",
+                                }}
+                            >
                                 <div>SKU</div>
                                 <div>Product</div>
                                 <div>Category</div>
                                 <div>Price</div>
                                 <div>Status</div>
                             </div>
+
                             {products.slice(0, 8).map((p, i) => (
                                 <div
-                                    key={p.sku}
+                                    key={`${p.sku}-${p.depotName}-${i}`}
                                     style={{
                                         display: "grid",
                                         gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr",
                                         gap: 12,
                                         padding: "14px 24px",
-                                        borderBottom: i === Math.min(products.length, 8) - 1 ? "none" : "1px solid #f0f4f0",
+                                        borderBottom:
+                                            i === Math.min(products.length, 8) - 1
+                                                ? "none"
+                                                : "1px solid #f0f4f0",
                                         alignItems: "center",
                                     }}
                                 >
-                                    <div style={{ fontSize: 13, color: "#7b8494", fontWeight: 600 }}>{p.sku}</div>
-                                    <div style={{ fontSize: 14, fontWeight: 700, color: "#273142" }}>{p.name}</div>
-                                    <div style={{ fontSize: 13, color: "#6b7280" }}>{p.category}</div>
-                                    <div style={{ fontSize: 14, fontWeight: 600, color: "#273142" }}>{formatPrice(p.price)}</div>
-                                    <div>
-                                        <span style={{
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            padding: "4px 10px",
-                                            borderRadius: 999,
-                                            fontSize: 12,
+                                    <div
+                                        style={{
+                                            fontSize: 13,
+                                            color: "#7b8494",
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        {p.sku}
+                                    </div>
+                                    <div
+                                        style={{
+                                            fontSize: 14,
                                             fontWeight: 700,
-                                            background: p.status.toUpperCase() === "ACTIVE" ? "#e8f5ec" : "#f3f4f6",
-                                            color: p.status.toUpperCase() === "ACTIVE" ? "#2e9d5b" : "#6b7280",
-                                            border: p.status.toUpperCase() === "ACTIVE" ? "1px solid #b9dec6" : "1px solid #d1d5db",
-                                        }}>
-                                            {p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase()}
+                                            color: "#273142",
+                                        }}
+                                    >
+                                        {p.name}
+                                    </div>
+                                    <div style={{ fontSize: 13, color: "#6b7280" }}>
+                                        {p.category}
+                                    </div>
+                                    <div
+                                        style={{
+                                            fontSize: 14,
+                                            fontWeight: 600,
+                                            color: "#273142",
+                                        }}
+                                    >
+                                        {formatPrice(p.price)}
+                                    </div>
+                                    <div>
+                                        <span
+                                            style={{
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                padding: "4px 10px",
+                                                borderRadius: 999,
+                                                fontSize: 12,
+                                                fontWeight: 700,
+                                                background: isActive(p.status)
+                                                    ? "#e8f5ec"
+                                                    : "#f3f4f6",
+                                                color: isActive(p.status)
+                                                    ? "#2e9d5b"
+                                                    : "#6b7280",
+                                                border: isActive(p.status)
+                                                    ? "1px solid #b9dec6"
+                                                    : "1px solid #d1d5db",
+                                            }}
+                                        >
+                                            {formatStatus(p.status)}
                                         </span>
                                     </div>
                                 </div>
@@ -252,43 +394,78 @@ export default function Dashboard() {
                     )}
                 </div>
 
-                {/* Depot Overview */}
-                <div style={{
-                    flex: isMobile ? "unset" : 1,
-                    background: "#fff",
-                    border: "1px solid #e6eaef",
-                    borderRadius: 18,
-                    overflow: "hidden",
-                }}>
-                    <div style={{ padding: "20px 24px", borderBottom: "1px solid #eef1f4" }}>
-                        <h2 style={{ fontSize: 15, fontWeight: 700, color: "#1f2937", margin: 0 }}>
+                <div
+                    style={{
+                        flex: isMobile ? "unset" : 1,
+                        background: "#fff",
+                        border: "1px solid #e6eaef",
+                        borderRadius: 18,
+                        overflow: "hidden",
+                    }}
+                >
+                    <div
+                        style={{
+                            padding: "20px 24px",
+                            borderBottom: "1px solid #eef1f4",
+                        }}
+                    >
+                        <h2
+                            style={{
+                                fontSize: 15,
+                                fontWeight: 700,
+                                color: "#1f2937",
+                                margin: 0,
+                            }}
+                        >
                             Depot Overview
                         </h2>
                     </div>
-                    <div style={{
-                        padding: "12px 16px",
-                        display: isMobile ? "grid" : "flex",
-                        gridTemplateColumns: isMobile ? "1fr 1fr" : undefined,
-                        flexDirection: isMobile ? undefined : "column",
-                        gap: 10,
-                    }}>
-                        {depots.map((d) => (
+
+                    <div
+                        style={{
+                            padding: "12px 16px",
+                            display: isMobile ? "grid" : "flex",
+                            gridTemplateColumns: isMobile ? "1fr 1fr" : undefined,
+                            flexDirection: isMobile ? undefined : "column",
+                            gap: 10,
+                        }}
+                    >
+                        {depots.map((d, index) => (
                             <div
-                                key={d.depotName}
+                                key={`${d.depotName ?? "depot"}-${index}`}
                                 style={{
                                     border: "1px solid #f0f4f0",
                                     borderRadius: 10,
                                     padding: "14px 16px",
                                 }}
                             >
-                                <div style={{ fontSize: 14, fontWeight: 700, color: "#273142", marginBottom: 4 }}>
-                                    {d.depotName}
+                                <div
+                                    style={{
+                                        fontSize: 14,
+                                        fontWeight: 700,
+                                        color: "#273142",
+                                        marginBottom: 4,
+                                    }}
+                                >
+                                    {d.depotName ?? "Unknown depot"}
                                 </div>
-                                <div style={{ fontSize: 12, color: "#7f8792", marginBottom: 8 }}>
-                                    📍 {d.location}
+                                <div
+                                    style={{
+                                        fontSize: 12,
+                                        color: "#7f8792",
+                                        marginBottom: 8,
+                                    }}
+                                >
+                                    📍 {d.location ?? "Unknown location"}
                                 </div>
-                                <div style={{ fontSize: 12, color: "#555", fontWeight: 500 }}>
-                                    ◈ {d.numberOfProducts} products
+                                <div
+                                    style={{
+                                        fontSize: 12,
+                                        color: "#555",
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    ◈ {d.numberOfProducts ?? 0} products
                                 </div>
                             </div>
                         ))}

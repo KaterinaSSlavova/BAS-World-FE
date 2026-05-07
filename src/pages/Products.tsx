@@ -486,7 +486,7 @@ export default function Products() {
                     available: depot.available,
                 })),
             };
-
+            console.log(payload);
             await createProduct(payload);
             await loadProducts();
 
