@@ -9,14 +9,13 @@ function mapProduct(item) {
     const firstDepot = item.depots?.[0] ?? {};
 
     return {
-        sku: product.sku ?? "",
-        name: product.name ?? "Unknown product",
-        category: product.category?.name ?? "Unknown",
-        price: Number(firstDepot.salePrice ?? 0),
-        stockQuantity: Number(firstDepot.stockQuantity ?? 0),
-        status: product.status ?? "UNKNOWN",
-        available: Boolean(firstDepot.available),
-        depotName: firstDepot.depot?.depotName ?? "Unknown depot",
+        sku: item.sku,
+        name: item.productName,
+        category: item.category,
+        price: Number(item.price),
+        status: item.status ?? "unknown",
+        available: Boolean(item.available),
+        depotName: item.depotName,
     };
 }
 
@@ -137,135 +136,41 @@ export default function Dashboard() {
                 </p>
             </div>
 
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
-                    gap: 16,
-                    marginBottom: 28,
-                }}
-            >
-                <StatCard
-                    label="ACTIVE PRODUCTS"
-                    value={String(activeCount)}
-                    sub="Currently available"
-                    subColor="#2e9d5b"
-                />
-                <StatCard
-                    label="UNAVAILABLE"
-                    value={String(unavailableCount)}
-                    sub="Not available"
-                    subColor="#d14343"
-                />
-                <StatCard
-                    label="LOW STOCK"
-                    value={String(lowStockCount)}
-                    sub="Needs attention"
-                    subColor="#d97706"
-                />
-                <StatCard
-                    label="INVENTORY VALUE"
-                    value={formatPrice(inventoryValue)}
-                    sub="Across all products"
-                    subColor="#7f8792"
-                />
+            {/* Stat Cards */}
+            <div style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
+                gap: 16,
+                marginBottom: 28,
+            }}>
+                <StatCard label="ACTIVE PRODUCTS" value={String(activeCount)} sub="Currently available" subColor="#2e9d5b" />
+                <StatCard label="UNAVAILABLE" value={String(unavailableCount)} sub="Not available" subColor="#d14343" />
+                <StatCard label="LOW STOCK" value={String(lowStockCount)} sub="Needs attention" subColor="#d97706" />
+                <StatCard label="INVENTORY VALUE" value={formatPrice(inventoryValue)} sub="Across all products" subColor="#7f8792" />
             </div>
 
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: isMobile ? "column" : "row",
-                    gap: 20,
-                }}
-            >
-                <div
-                    style={{
-                        flex: 2,
-                        background: "#fff",
-                        border: "1px solid #e6eaef",
-                        borderRadius: 18,
-                        overflow: "hidden",
-                    }}
-                >
-                    <div
-                        style={{
-                            padding: "20px 24px",
-                            borderBottom: "1px solid #eef1f4",
-                        }}
-                    >
-                        <h2
-                            style={{
-                                fontSize: 15,
-                                fontWeight: 700,
-                                color: "#1f2937",
-                                margin: 0,
-                            }}
-                        >
-                            Recent Products
-                        </h2>
+            {/* Bottom panels */}
+            <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 20 }}>
+                {/* Recent Products */}
+                <div style={{ flex: 2, background: "#fff", border: "1px solid #e6eaef", borderRadius: 18, overflow: "hidden" }}>
+                    <div style={{ padding: "20px 24px", borderBottom: "1px solid #eef1f4" }}>
+                        <h2 style={{ fontSize: 15, fontWeight: 700, color: "#1f2937", margin: 0 }}>Recent Products</h2>
                     </div>
 
                     {isMobile ? (
-                        <div
-                            style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 10,
-                                padding: 12,
-                            }}
-                        >
-                            {products.slice(0, 8).map((p, index) => (
-                                <div
-                                    key={`${p.sku}-${p.depotName}-${index}`}
-                                    style={{
-                                        border: "1px solid #eef1f4",
-                                        borderRadius: 12,
-                                        padding: "12px 14px",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: 6,
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "flex-start",
-                                        }}
-                                    >
-                                        <div
-                                            style={{
-                                                fontSize: 14,
-                                                fontWeight: 700,
-                                                color: "#273142",
-                                                flex: 1,
-                                                marginRight: 8,
-                                            }}
-                                        >
-                                            {p.name}
-                                        </div>
-
-                                        <span
-                                            style={{
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                padding: "4px 10px",
-                                                borderRadius: 999,
-                                                fontSize: 11,
-                                                fontWeight: 700,
-                                                background: isActive(p.status)
-                                                    ? "#e8f5ec"
-                                                    : "#f3f4f6",
-                                                color: isActive(p.status)
-                                                    ? "#2e9d5b"
-                                                    : "#6b7280",
-                                                border: isActive(p.status)
-                                                    ? "1px solid #b9dec6"
-                                                    : "1px solid #d1d5db",
-                                                whiteSpace: "nowrap",
-                                            }}
-                                        >
-                                            {formatStatus(p.status)}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12 }}>
+                            {products.slice(0, 8).map((p) => (
+                                <div key={p.sku} style={{ border: "1px solid #eef1f4", borderRadius: 12, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                        <div style={{ fontSize: 14, fontWeight: 700, color: "#273142", flex: 1, marginRight: 8 }}>{p.name}</div>
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: 999,
+                                            fontSize: 11, fontWeight: 700, whiteSpace: "nowrap",
+                                            background: p.status.toUpperCase() === "ACTIVE" ? "#e8f5ec" : "#f3f4f6",
+                                            color: p.status.toUpperCase() === "ACTIVE" ? "#2e9d5b" : "#6b7280",
+                                            border: p.status.toUpperCase() === "ACTIVE" ? "1px solid #b9dec6" : "1px solid #d1d5db",
+                                        }}>
+                                            {p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase()}
                                         </span>
                                     </div>
 
@@ -298,94 +203,33 @@ export default function Dashboard() {
                         </div>
                     ) : (
                         <>
-                            <div
-                                style={{
-                                    display: "grid",
-                                    gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr",
-                                    gap: 12,
-                                    padding: "12px 24px",
-                                    background: "#fbfcfd",
-                                    borderBottom: "1px solid #eef1f4",
-                                    fontSize: 11,
-                                    fontWeight: 800,
-                                    color: "#7b8494",
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.08em",
-                                }}
-                            >
-                                <div>SKU</div>
-                                <div>Product</div>
-                                <div>Category</div>
-                                <div>Price</div>
-                                <div>Status</div>
+                            <div style={{
+                                display: "grid", gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr", gap: 12,
+                                padding: "12px 24px", background: "#fbfcfd", borderBottom: "1px solid #eef1f4",
+                                fontSize: 11, fontWeight: 800, color: "#7b8494", textTransform: "uppercase", letterSpacing: "0.08em",
+                            }}>
+                                <div>SKU</div><div>Product</div><div>Category</div><div>Price</div><div>Status</div>
                             </div>
 
                             {products.slice(0, 8).map((p, i) => (
-                                <div
-                                    key={`${p.sku}-${p.depotName}-${i}`}
-                                    style={{
-                                        display: "grid",
-                                        gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr",
-                                        gap: 12,
-                                        padding: "14px 24px",
-                                        borderBottom:
-                                            i === Math.min(products.length, 8) - 1
-                                                ? "none"
-                                                : "1px solid #f0f4f0",
-                                        alignItems: "center",
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            fontSize: 13,
-                                            color: "#7b8494",
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        {p.sku}
-                                    </div>
-                                    <div
-                                        style={{
-                                            fontSize: 14,
-                                            fontWeight: 700,
-                                            color: "#273142",
-                                        }}
-                                    >
-                                        {p.name}
-                                    </div>
-                                    <div style={{ fontSize: 13, color: "#6b7280" }}>
-                                        {p.category}
-                                    </div>
-                                    <div
-                                        style={{
-                                            fontSize: 14,
-                                            fontWeight: 600,
-                                            color: "#273142",
-                                        }}
-                                    >
-                                        {formatPrice(p.price)}
-                                    </div>
+                                <div key={p.sku} style={{
+                                    display: "grid", gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr", gap: 12,
+                                    padding: "14px 24px", alignItems: "center",
+                                    borderBottom: i === Math.min(products.length, 8) - 1 ? "none" : "1px solid #f0f4f0",
+                                }}>
+                                    <div style={{ fontSize: 13, color: "#7b8494", fontWeight: 600 }}>{p.sku}</div>
+                                    <div style={{ fontSize: 14, fontWeight: 700, color: "#273142" }}>{p.name}</div>
+                                    <div style={{ fontSize: 13, color: "#6b7280" }}>{p.category}</div>
+                                    <div style={{ fontSize: 14, fontWeight: 600, color: "#273142" }}>{formatPrice(p.price)}</div>
                                     <div>
-                                        <span
-                                            style={{
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                padding: "4px 10px",
-                                                borderRadius: 999,
-                                                fontSize: 12,
-                                                fontWeight: 700,
-                                                background: isActive(p.status)
-                                                    ? "#e8f5ec"
-                                                    : "#f3f4f6",
-                                                color: isActive(p.status)
-                                                    ? "#2e9d5b"
-                                                    : "#6b7280",
-                                                border: isActive(p.status)
-                                                    ? "1px solid #b9dec6"
-                                                    : "1px solid #d1d5db",
-                                            }}
-                                        >
-                                            {formatStatus(p.status)}
+                                        <span style={{
+                                            display: "inline-flex", alignItems: "center", padding: "4px 10px",
+                                            borderRadius: 999, fontSize: 12, fontWeight: 700,
+                                            background: p.status.toUpperCase() === "ACTIVE" ? "#e8f5ec" : "#f3f4f6",
+                                            color: p.status.toUpperCase() === "ACTIVE" ? "#2e9d5b" : "#6b7280",
+                                            border: p.status.toUpperCase() === "ACTIVE" ? "1px solid #b9dec6" : "1px solid #d1d5db",
+                                        }}>
+                                            {p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase()}
                                         </span>
                                     </div>
                                 </div>
@@ -394,79 +238,23 @@ export default function Dashboard() {
                     )}
                 </div>
 
-                <div
-                    style={{
-                        flex: isMobile ? "unset" : 1,
-                        background: "#fff",
-                        border: "1px solid #e6eaef",
-                        borderRadius: 18,
-                        overflow: "hidden",
-                    }}
-                >
-                    <div
-                        style={{
-                            padding: "20px 24px",
-                            borderBottom: "1px solid #eef1f4",
-                        }}
-                    >
-                        <h2
-                            style={{
-                                fontSize: 15,
-                                fontWeight: 700,
-                                color: "#1f2937",
-                                margin: 0,
-                            }}
-                        >
-                            Depot Overview
-                        </h2>
+                {/* Depot Overview */}
+                <div style={{ flex: isMobile ? "unset" : 1, background: "#fff", border: "1px solid #e6eaef", borderRadius: 18, overflow: "hidden" }}>
+                    <div style={{ padding: "20px 24px", borderBottom: "1px solid #eef1f4" }}>
+                        <h2 style={{ fontSize: 15, fontWeight: 700, color: "#1f2937", margin: 0 }}>Depot Overview</h2>
                     </div>
-
-                    <div
-                        style={{
-                            padding: "12px 16px",
-                            display: isMobile ? "grid" : "flex",
-                            gridTemplateColumns: isMobile ? "1fr 1fr" : undefined,
-                            flexDirection: isMobile ? undefined : "column",
-                            gap: 10,
-                        }}
-                    >
-                        {depots.map((d, index) => (
-                            <div
-                                key={`${d.depotName ?? "depot"}-${index}`}
-                                style={{
-                                    border: "1px solid #f0f4f0",
-                                    borderRadius: 10,
-                                    padding: "14px 16px",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        fontSize: 14,
-                                        fontWeight: 700,
-                                        color: "#273142",
-                                        marginBottom: 4,
-                                    }}
-                                >
-                                    {d.depotName ?? "Unknown depot"}
-                                </div>
-                                <div
-                                    style={{
-                                        fontSize: 12,
-                                        color: "#7f8792",
-                                        marginBottom: 8,
-                                    }}
-                                >
-                                    📍 {d.location ?? "Unknown location"}
-                                </div>
-                                <div
-                                    style={{
-                                        fontSize: 12,
-                                        color: "#555",
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    ◈ {d.numberOfProducts ?? 0} products
-                                </div>
+                    <div style={{
+                        padding: "12px 16px",
+                        display: isMobile ? "grid" : "flex",
+                        gridTemplateColumns: isMobile ? "1fr 1fr" : undefined,
+                        flexDirection: isMobile ? undefined : "column",
+                        gap: 10,
+                    }}>
+                        {depots.map((d) => (
+                            <div key={d.depotName} style={{ border: "1px solid #f0f4f0", borderRadius: 10, padding: "14px 16px" }}>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: "#273142", marginBottom: 4 }}>{d.depotName}</div>
+                                <div style={{ fontSize: 12, color: "#7f8792", marginBottom: 8 }}>📍 {d.location}</div>
+                                <div style={{ fontSize: 12, color: "#555", fontWeight: 500 }}>◈ {d.numberOfProducts} products</div>
                             </div>
                         ))}
                     </div>

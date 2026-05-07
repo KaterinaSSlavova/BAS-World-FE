@@ -15,7 +15,11 @@ package:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
-    - docker build -t bas-world-fe:latest .
+    - docker build 
+      --build-arg VITE_API_BASE_URL=$VITE_API_BASE_URL
+      --build-arg VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+      --build-arg VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+      -t bas-world-fe:latest .
 
 trigger_deploy:
   stage: trigger_deploy
