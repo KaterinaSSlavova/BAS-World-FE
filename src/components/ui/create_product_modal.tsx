@@ -6,6 +6,7 @@ export type DepotFormRow = {
     costPrice: number | "";
     salePrice: number | "";
     available: boolean;
+    stockThreshold: number | "";
 };
 
 export type CreateProductFormData = {
@@ -360,7 +361,7 @@ export default function CreateProductModal({
                                     )}
                                 </div>
 
-                                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr", gap: 12 }}>
+                                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 1fr", gap: 12 }}>
                                     <div style={{ display: "flex", flexDirection: "column" }}>
                                         <label style={labelStyle}>Depot</label>
                                         <select
@@ -414,6 +415,19 @@ export default function CreateProductModal({
                                                 onDepotChange(index, "salePrice", e.target.value === "" ? "" : Number(e.target.value))
                                             }
                                             placeholder="120"
+                                            style={inputStyle}
+                                        />
+                                    </div>
+
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                        <label style={labelStyle}>Stock Threshold</label>
+                                        <input
+                                            type="number"
+                                            value={row.stockThreshold}
+                                            onChange={(e) =>
+                                                onDepotChange(index, "stockThreshold", e.target.value === "" ? "" : Number(e.target.value))
+                                            }
+                                            placeholder="10"
                                             style={inputStyle}
                                         />
                                     </div>

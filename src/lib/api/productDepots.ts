@@ -22,3 +22,8 @@ export const searchProductDepots = async (query: string) => {
     });
     return response.data;
 };
+
+export async function getStockAlerts() {
+    const response = await api.get("/product-depots/stock-alerts");
+    return response.data;
+}
