@@ -432,36 +432,6 @@ export default function CreateProductModal({
                                         />
                                     </div>
                                 </div>
-
-                                <div
-                                    style={{
-                                        marginTop: 12,
-                                        paddingTop: 12,
-                                        borderTop: "1px solid #edf1ed",
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        gap: 12,
-                                    }}
-                                >
-                                    <label
-                                        style={{
-                                            display: "flex",
-                                            gap: 10,
-                                            alignItems: "center",
-                                            color: "#111827",
-                                            fontSize: 14,
-                                            fontWeight: 800,
-                                        }}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={row.available}
-                                            onChange={(e) => onDepotChange(index, "available", e.target.checked)}
-                                        />
-                                        Available in this depot
-                                    </label>
-                                </div>
                             </div>
                         ))}
                     </div>

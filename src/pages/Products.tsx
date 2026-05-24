@@ -32,7 +32,7 @@ type BackendProductWithDepots = {
         stockQuantity: number;
         costPrice: number;
         salePrice: number;
-        isAvailable: boolean;
+        available: boolean;
         stockThreshold?: number;
     }[];
 };
@@ -102,7 +102,7 @@ function mapBackendProductToFrontend(item: BackendProductWithDepots): ProductRow
         stockQuantity: Number(depotItem.stockQuantity ?? 0),
         stockThreshold: Number(depotItem.stockThreshold ?? 10),
         status: item.product.status ?? "Unknown",
-        available: Boolean(depotItem.isAvailable),
+        available: Boolean(depotItem.available),
         description: item.product.description ?? "",
     }));
 }
@@ -317,13 +317,15 @@ export default function Products() {
                 status: toBackendStatus(status),
                 typeId: Number(typeId),
                 categoryId: Number(categoryId),
+                vehicleTypeId: 1,
+                supplierId: 1,
                 productDepots: productDepots.map((depot) => ({
                     depotId: Number(depot.depotId),
                     stockQuantity: Number(depot.stockQuantity),
                     costPrice: Number(depot.costPrice),
                     salePrice: Number(depot.salePrice),
-                    available: depot.available,
                     stockThreshold: Number(depot.stockThreshold),
+                    supplierId: 1,
                 })),
             };
             await createProduct(payload);
@@ -350,13 +352,15 @@ export default function Products() {
                 status: toBackendStatus(updatedProduct.status),
                 typeId: Number(updatedProduct.typeId),
                 categoryId: Number(updatedProduct.categoryId),
+                vehicleTypeId: 1,
+                supplierId: 1,
                 productDepots: updatedDepots.map((depot) => ({
                     depotId: Number(depot.depotId),
                     stockQuantity: Number(depot.stockQuantity),
                     costPrice: Number(depot.costPrice),
                     salePrice: Number(depot.salePrice),
-                    available: depot.available,
                     stockThreshold: Number(depot.stockThreshold ?? 10),
+                    supplierId: 1,
                 })),
             };
             await updateProduct(updatedProduct.productId, payload);

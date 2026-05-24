@@ -508,38 +508,6 @@ export default function ProductDetailsModal({
                                             />
                                         </div>
                                     </div>
-
-                                    <div
-                                        style={{
-                                            marginTop: 12,
-                                            paddingTop: 12,
-                                            borderTop: "1px solid #edf1ed",
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <label
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 10,
-                                                fontSize: 14,
-                                                fontWeight: 800,
-                                                color: "#111827",
-                                            }}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={depotRow.available}
-                                                disabled={!isDepotEditing}
-                                                onChange={(e) =>
-                                                    handleDepotChange(depotRow.depotId, "available", e.target.checked)
-                                                }
-                                            />
-                                            Available in this depot
-                                        </label>
-                                    </div>
                                 </div>
                             );
                         })}
