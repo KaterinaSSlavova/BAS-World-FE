@@ -171,7 +171,6 @@ export default function ProductDetailsModal({
     const handleBrandChange = (newBrandId: number) => {
         const selected = brandOptions.find((option) => option.id === newBrandId);
         if (!selected) return;
-
         setProductForm((prev) =>
             prev ? { ...prev, brandId: selected.id, brand: selected.name } : prev
         );
@@ -180,7 +179,6 @@ export default function ProductDetailsModal({
     const handleTypeChange = (newTypeId: number) => {
         const selected = typeOptions.find((option) => option.id === newTypeId);
         if (!selected) return;
-
         setProductForm((prev) =>
             prev ? { ...prev, typeId: selected.id, type: selected.name } : prev
         );
@@ -189,7 +187,6 @@ export default function ProductDetailsModal({
     const handleCategoryChange = (newCategoryId: number) => {
         const selected = categoryOptions.find((option) => option.id === newCategoryId);
         if (!selected) return;
-
         setProductForm((prev) =>
             prev ? { ...prev, categoryId: selected.id, category: selected.name } : prev
         );
@@ -203,7 +200,6 @@ export default function ProductDetailsModal({
     const handleCancelDepotEdit = (depotId: number) => {
         const originalRow = productDepotRows.find((row) => row.depotId === depotId);
         if (!originalRow) return;
-
         setDepotForms((prev) =>
             prev.map((row) => (row.depotId === depotId ? originalRow : row))
         );
@@ -247,13 +243,7 @@ export default function ProductDetailsModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        style={{
-                            ...secondaryButtonStyle,
-                            width: 36,
-                            height: 36,
-                            padding: 0,
-                            fontSize: 18,
-                        }}
+                        style={{ ...secondaryButtonStyle, width: 36, height: 36, padding: 0, fontSize: 18 }}
                     >
                         ×
                     </button>
@@ -285,7 +275,6 @@ export default function ProductDetailsModal({
                                     >
                                         Cancel
                                     </button>
-
                                     <button
                                         type="button"
                                         onClick={handleSave}
@@ -327,9 +316,7 @@ export default function ProductDetailsModal({
                                         style={inputStyle}
                                     >
                                         {brandOptions.map((option) => (
-                                            <option key={option.id} value={option.id}>
-                                                {option.name}
-                                            </option>
+                                            <option key={option.id} value={option.id}>{option.name}</option>
                                         ))}
                                     </select>
                                 ) : (
@@ -346,9 +333,7 @@ export default function ProductDetailsModal({
                                         style={inputStyle}
                                     >
                                         {categoryOptions.map((option) => (
-                                            <option key={option.id} value={option.id}>
-                                                {option.name}
-                                            </option>
+                                            <option key={option.id} value={option.id}>{option.name}</option>
                                         ))}
                                     </select>
                                 ) : (
@@ -365,9 +350,7 @@ export default function ProductDetailsModal({
                                         style={inputStyle}
                                     >
                                         {typeOptions.map((option) => (
-                                            <option key={option.id} value={option.id}>
-                                                {option.name}
-                                            </option>
+                                            <option key={option.id} value={option.id}>{option.name}</option>
                                         ))}
                                     </select>
                                 ) : (
@@ -408,7 +391,7 @@ export default function ProductDetailsModal({
                                 Depot Details
                             </h3>
                             <p style={{ margin: "4px 0 0", fontSize: 13, color: "#4b5563", fontWeight: 500 }}>
-                                Manage stock, pricing and availability for each depot.
+                                Manage stock, pricing, threshold and availability for each depot.
                             </p>
                         </div>
 
@@ -451,7 +434,6 @@ export default function ProductDetailsModal({
                                                 >
                                                     Cancel
                                                 </button>
-
                                                 <button
                                                     type="button"
                                                     onClick={handleSave}
@@ -468,7 +450,7 @@ export default function ProductDetailsModal({
                                         )}
                                     </div>
 
-                                    <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr", gap: 12 }}>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr 1fr", gap: 12 }}>
                                         <div style={{ display: "flex", flexDirection: "column" }}>
                                             <label style={labelStyle}>Depot</label>
                                             <input value={depotRow.depotName} readOnly style={readOnlyStyle} />
@@ -512,38 +494,19 @@ export default function ProductDetailsModal({
                                                 style={isDepotEditing ? inputStyle : readOnlyStyle}
                                             />
                                         </div>
-                                    </div>
 
-                                    <div
-                                        style={{
-                                            marginTop: 12,
-                                            paddingTop: 12,
-                                            borderTop: "1px solid #edf1ed",
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <label
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 10,
-                                                fontSize: 14,
-                                                fontWeight: 800,
-                                                color: "#111827",
-                                            }}
-                                        >
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <label style={labelStyle}>Stock Threshold</label>
                                             <input
-                                                type="checkbox"
-                                                checked={depotRow.available}
-                                                disabled={!isDepotEditing}
+                                                type="number"
+                                                value={depotRow.stockThreshold}
+                                                readOnly={!isDepotEditing}
                                                 onChange={(e) =>
-                                                    handleDepotChange(depotRow.depotId, "available", e.target.checked)
+                                                    handleDepotChange(depotRow.depotId, "stockThreshold", Number(e.target.value))
                                                 }
+                                                style={isDepotEditing ? inputStyle : readOnlyStyle}
                                             />
-                                            Available in this depot
-                                        </label>
+                                        </div>
                                     </div>
                                 </div>
                             );

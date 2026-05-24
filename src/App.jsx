@@ -7,6 +7,7 @@ import logo from "./assets/basworld-logo.png";
 import Brands from "./pages/Brands.jsx";
 import Depots from "./pages/Depots.jsx";
 import Configuration from "./pages/Configuration.jsx";
+import StockAlerts from "./pages/StockAlerts.jsx";
 
 function LandingPage() {
     return (
@@ -50,6 +51,7 @@ function App() {
                 <Route path="/types" element={<Configuration />} />
                 <Route path="/categories" element={<Configuration />} />
                 <Route path="/configuration" element={<Configuration />} />
+                <Route path="/stock-alerts" element={<StockAlerts />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>

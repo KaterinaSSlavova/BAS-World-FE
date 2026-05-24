@@ -6,6 +6,7 @@ export type DepotFormRow = {
     costPrice: number | "";
     salePrice: number | "";
     available: boolean;
+    stockThreshold: number | "";
 };
 
 export type CreateProductFormData = {
@@ -360,7 +361,7 @@ export default function CreateProductModal({
                                     )}
                                 </div>
 
-                                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr", gap: 12 }}>
+                                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 1fr", gap: 12 }}>
                                     <div style={{ display: "flex", flexDirection: "column" }}>
                                         <label style={labelStyle}>Depot</label>
                                         <select
@@ -417,36 +418,19 @@ export default function CreateProductModal({
                                             style={inputStyle}
                                         />
                                     </div>
-                                </div>
 
-                                <div
-                                    style={{
-                                        marginTop: 12,
-                                        paddingTop: 12,
-                                        borderTop: "1px solid #edf1ed",
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        gap: 12,
-                                    }}
-                                >
-                                    <label
-                                        style={{
-                                            display: "flex",
-                                            gap: 10,
-                                            alignItems: "center",
-                                            color: "#111827",
-                                            fontSize: 14,
-                                            fontWeight: 800,
-                                        }}
-                                    >
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                        <label style={labelStyle}>Stock Threshold</label>
                                         <input
-                                            type="checkbox"
-                                            checked={row.available}
-                                            onChange={(e) => onDepotChange(index, "available", e.target.checked)}
+                                            type="number"
+                                            value={row.stockThreshold}
+                                            onChange={(e) =>
+                                                onDepotChange(index, "stockThreshold", e.target.value === "" ? "" : Number(e.target.value))
+                                            }
+                                            placeholder="10"
+                                            style={inputStyle}
                                         />
-                                        Available in this depot
-                                    </label>
+                                    </div>
                                 </div>
                             </div>
                         ))}
