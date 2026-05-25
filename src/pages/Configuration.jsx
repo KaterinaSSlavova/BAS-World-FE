@@ -3,10 +3,14 @@ import AppLayout from "../components/AppLayout";
 import { getAllBrands } from "../lib/api/brands";
 import { getAllCategories } from "../lib/api/categories";
 import { getAllTypes } from "../lib/api/types";
-import { CountPill } from "./Configurationshared.jsx";
-import ConfigurationTypes from "./Configurationtypes.jsx";
-import ConfigurationCategories from "./Configurationcategories.jsx";
-import ConfigurationBrands from "./Configurationbrands.jsx";
+import { CountPill } from "./ConfigurationShared";
+import ConfigurationTypes from "./ConfigurationTypes";
+import ConfigurationCategories from "./ConfigurationCategories";
+import ConfigurationBrands from "./ConfigurationBrands";
+import ConfigurationSuppliers from "./ConfigurationSuppliers";
+import ConfigurationVehicleTypes from "./ConfigurationVehicleTypes";
+import { getAllSuppliers } from "../lib/api/suppliers.ts";
+import { getAllVehicleTypes } from "../lib/api/vehicleTypes.ts";
 
 export default function Configuration() {
     const [activeTab, setActiveTab] = useState("types");
@@ -27,6 +31,16 @@ export default function Configuration() {
     const [brandsError, setBrandsError] = useState("");
     const [showArchivedBrands, setShowArchivedBrands] = useState(false);
 
+    const [suppliers, setSuppliers] = useState([]);
+    const [suppliersLoading, setSuppliersLoading] = useState(false);
+    const [suppliersError, setSuppliersError] = useState("");
+    const [showArchivedSuppliers, setShowArchivedSuppliers] = useState(false);
+
+    const [vehicleTypes, setVehicleTypes] = useState([]);
+    const [vehicleTypesLoading, setVehicleTypesLoading] = useState(false);
+    const [vehicleTypesError, setVehicleTypesError] = useState("");
+    const [showArchivedVehicleTypes, setShowArchivedVehicleTypes] = useState(false);
+
     useEffect(() => {
         const loadAll = async () => {
             setTypesLoading(true);
@@ -43,21 +57,35 @@ export default function Configuration() {
             try { setBrands(await getAllBrands()); }
             catch { setBrandsError("Failed to load brands."); }
             finally { setBrandsLoading(false); }
+
+            setSuppliersLoading(true);
+            try { setSuppliers(await getAllSuppliers()); }
+            catch { setSuppliersError("Failed to load suppliers."); }
+            finally { setSuppliersLoading(false); }
+
+            setVehicleTypesLoading(true);
+            try { setVehicleTypes(await getAllVehicleTypes()); }
+            catch { setVehicleTypesError("Failed to load vehicle types."); }
+            finally { setVehicleTypesLoading(false); }
         };
         void loadAll();
     }, []);
 
     const reloadAll = async () => {
-        const [t, c, b] = await Promise.all([getAllTypes(), getAllCategories(), getAllBrands()]);
+        const [t, c, b, s, v] = await Promise.all([getAllTypes(), getAllCategories(), getAllBrands(), getAllSuppliers(), getAllVehicleTypes()]);
         setTypes(t);
         setCategories(c);
         setBrands(b);
+        setSuppliers(s);
+        setVehicleTypes(v);
     };
 
     const tabs = [
-        { key: "types", label: "Types", count: types.filter((t) => !t.is_archived).length },
-        { key: "categories", label: "Categories", count: categories.filter((c) => !c.is_archived).length },
-        { key: "brands", label: "Brands", count: brands.filter((b) => !b.is_archived).length },
+        { key: "types", label: "Types", count: types.filter((t) => !t.archived).length },
+        { key: "categories", label: "Categories", count: categories.filter((c) => !c.archived).length },
+        { key: "brands", label: "Brands", count: brands.filter((b) => !b.archived).length },
+        { key: "suppliers", label: "Suppliers", count: suppliers.filter((s) => !s.archived).length },
+        { key: "vehicleTypes", label: "Vehicle Types", count: vehicleTypes.filter((v) => !v.archived).length },
     ];
 
     return (
@@ -120,6 +148,24 @@ export default function Configuration() {
                         search={search} onSearchChange={setSearch}
                         showArchived={showArchivedBrands}
                         onToggleArchived={() => setShowArchivedBrands((v) => !v)}
+                        onReload={reloadAll}
+                    />
+                )}
+                {activeTab === "suppliers" && (
+                    <ConfigurationSuppliers
+                        suppliers={suppliers} loading={suppliersLoading} error={suppliersError}
+                        search={search} onSearchChange={setSearch}
+                        showArchived={showArchivedSuppliers}
+                        onToggleArchived={() => setShowArchivedSuppliers((v) => !v)}
+                        onReload={reloadAll}
+                    />
+                )}
+                {activeTab === "vehicleTypes" && (
+                    <ConfigurationVehicleTypes
+                        vehicleTypes={vehicleTypes} loading={vehicleTypesLoading} error={vehicleTypesError}
+                        search={search} onSearchChange={setSearch}
+                        showArchived={showArchivedVehicleTypes}
+                        onToggleArchived={() => setShowArchivedVehicleTypes((v) => !v)}
                         onReload={reloadAll}
                     />
                 )}
