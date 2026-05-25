@@ -5,6 +5,7 @@ import { getAllBrands } from "../lib/api/brands";
 import { getDepotOverview } from "../lib/api/depots";
 import { getAllCategories } from "../lib/api/categories";
 import { getAllTypes } from "../lib/api/types";
+import { getAllSuppliers } from "../lib/api/suppliers";
 import CreateProductModal, {
     type CreateProductFormData,
     type DepotFormRow,
@@ -34,6 +35,12 @@ type BackendProductWithDepots = {
         salePrice: number;
         available: boolean;
         stockThreshold?: number;
+        supplier?: {
+            id: number;
+            name: string;
+            picture?: string;
+            archived?: boolean;
+        };
     }[];
 };
 
@@ -55,6 +62,8 @@ export type ProductRow = {
     salePrice: number;
     stockQuantity: number;
     stockThreshold: number;
+    supplierId: number;
+    supplierName: string;
     status: string;
     available: boolean;
     description: string;
@@ -72,6 +81,7 @@ const emptyDepotRow: DepotFormRow = {
     salePrice: "",
     available: true,
     stockThreshold: "",
+    supplierId: "",
 };
 
 function normalizeDepotOverview(data: any): SelectOption[] {
@@ -101,6 +111,8 @@ function mapBackendProductToFrontend(item: BackendProductWithDepots): ProductRow
         salePrice: Number(depotItem.salePrice ?? 0),
         stockQuantity: Number(depotItem.stockQuantity ?? 0),
         stockThreshold: Number(depotItem.stockThreshold ?? 10),
+        supplierId: depotItem.supplier?.id ?? 0,
+        supplierName: depotItem.supplier?.name ?? "Unknown",
         status: item.product.status ?? "Unknown",
         available: Boolean(depotItem.available),
         description: item.product.description ?? "",
@@ -228,6 +240,7 @@ export default function Products() {
     const [typeOptions, setTypeOptions] = useState<SelectOption[]>([]);
     const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
     const [depotOptions, setDepotOptions] = useState<SelectOption[]>([]);
+    const [supplierOptions, setSupplierOptions] = useState<SelectOption[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -271,17 +284,23 @@ export default function Products() {
 
     const loadOptions = async () => {
         try {
-            const [brands, types, categories, depots] = await Promise.all([
+            const [brands, types, categories, depots, suppliers] = await Promise.all([
                 getAllBrands(),
                 getAllTypes(),
                 getAllCategories(),
                 getDepotOverview(),
+                getAllSuppliers(),
             ]);
 
             setBrandOptions((brands ?? []).map((b: any) => ({ id: b.id, name: b.name })));
             setTypeOptions((types ?? []).map((t: any) => ({ id: t.id, name: t.name })));
             setCategoryOptions((categories ?? []).map((c: any) => ({ id: c.id, name: c.name })));
             setDepotOptions(normalizeDepotOverview(depots));
+            setSupplierOptions(
+                (suppliers ?? [])
+                    .filter((s: any) => !s.archived)
+                    .map((s: any) => ({ id: s.id, name: s.name }))
+            );
         } catch (err) {
             console.error("Failed to load select options", err);
         }
@@ -341,12 +360,18 @@ export default function Products() {
         const { sku, name, description, brandId, status, typeId, categoryId, productDepots } = newProduct;
 
         const hasInvalidDepot = productDepots.some(
-            (d) => d.depotId === "" || d.stockQuantity === "" || d.costPrice === "" || d.salePrice === "" || d.stockThreshold === ""
+            (d) =>
+                d.depotId === "" ||
+                d.stockQuantity === "" ||
+                d.costPrice === "" ||
+                d.salePrice === "" ||
+                d.stockThreshold === "" ||
+                d.supplierId === ""
         );
 
         if (!sku.trim() || !name.trim() || !description.trim() || brandId === "" || !status ||
             typeId === "" || categoryId === "" || productDepots.length === 0 || hasInvalidDepot) {
-            alert("Please fill all required fields including stock threshold.");
+            alert("Please fill all required fields including stock threshold and supplier.");
             return;
         }
 
@@ -360,14 +385,14 @@ export default function Products() {
                 typeId: Number(typeId),
                 categoryId: Number(categoryId),
                 vehicleTypeId: 1,
-                supplierId: 1,
+                supplierId: Number(productDepots[0].supplierId),
                 productDepots: productDepots.map((depot) => ({
                     depotId: Number(depot.depotId),
                     stockQuantity: Number(depot.stockQuantity),
                     costPrice: Number(depot.costPrice),
                     salePrice: Number(depot.salePrice),
                     stockThreshold: Number(depot.stockThreshold),
-                    supplierId: 1,
+                    supplierId: Number(depot.supplierId),
                 })),
             };
 
@@ -396,14 +421,14 @@ export default function Products() {
                 typeId: Number(updatedProduct.typeId),
                 categoryId: Number(updatedProduct.categoryId),
                 vehicleTypeId: 1,
-                supplierId: 1,
+                supplierId: Number(updatedDepots[0]?.supplierId ?? updatedProduct.supplierId),
                 productDepots: updatedDepots.map((depot) => ({
                     depotId: Number(depot.depotId),
                     stockQuantity: Number(depot.stockQuantity),
                     costPrice: Number(depot.costPrice),
                     salePrice: Number(depot.salePrice),
                     stockThreshold: Number(depot.stockThreshold ?? 10),
-                    supplierId: 1,
+                    supplierId: Number(depot.supplierId),
                 })),
             };
 
@@ -423,7 +448,8 @@ export default function Products() {
             const matchesSearch =
                 p.name.toLowerCase().includes(search.toLowerCase()) ||
                 p.sku.toLowerCase().includes(search.toLowerCase()) ||
-                p.brand.toLowerCase().includes(search.toLowerCase());
+                p.brand.toLowerCase().includes(search.toLowerCase()) ||
+                p.supplierName.toLowerCase().includes(search.toLowerCase());
 
             const matchesCategory = categoryFilter === "all" || String(p.categoryId) === categoryFilter;
             const matchesBrand = brandFilter === "all" || String(p.brandId) === brandFilter;
@@ -668,6 +694,7 @@ export default function Products() {
                 types={typeOptions}
                 categories={categoryOptions}
                 depots={depotOptions}
+                suppliers={supplierOptions}
                 onClose={() => {
                     setShowCreateModal(false);
                     resetForm();
@@ -689,6 +716,7 @@ export default function Products() {
                 typeOptions={typeOptions}
                 categoryOptions={categoryOptions}
                 depotOptions={depotOptions}
+                supplierOptions={supplierOptions}
             />
         </AppLayout>
     );

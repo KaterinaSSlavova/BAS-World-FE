@@ -1,6 +1,6 @@
 import { api } from "./axios";
 
-export type Supplier = {
+export type Suppliers = {
     id: number;
     name: string;
     picture: string;
@@ -13,17 +13,17 @@ export type SupplierRequest = {
     archived: boolean;
 };
 
-export const getAllSuppliers = async (): Promise<Supplier[]> => {
+export const getAllSuppliers = async (): Promise<Suppliers[]> => {
     const response = await api.get("/suppliers");
     return response.data;
 };
 
-export const getSupplierById = async (id: number): Promise<Supplier> => {
+export const getSupplierById = async (id: number): Promise<Suppliers> => {
     const response = await api.get(`/suppliers/${id}`);
     return response.data;
 };
 
-export const createSupplier = async (data: SupplierRequest): Promise<Supplier> => {
+export const createSupplier = async (data: SupplierRequest): Promise<Suppliers> => {
     const response = await api.post("/suppliers", data);
     return response.data;
 };
@@ -31,7 +31,7 @@ export const createSupplier = async (data: SupplierRequest): Promise<Supplier> =
 export const updateSupplier = async (
     id: number,
     data: SupplierRequest
-): Promise<Supplier> => {
+): Promise<Suppliers> => {
     const response = await api.put(`/suppliers/${id}`, data);
     return response.data;
 };
