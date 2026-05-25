@@ -12,7 +12,7 @@ interface ProductDetailsModalProps {
     categoryOptions: SelectOption[];
     depotOptions: SelectOption[];
 }
-
+//this is for the stock-alert don't change
 const overlayStyle: CSSProperties = {
     position: "fixed",
     inset: 0,
