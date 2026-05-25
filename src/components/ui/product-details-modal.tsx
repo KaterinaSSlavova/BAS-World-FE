@@ -10,6 +10,7 @@ interface ProductDetailsModalProps {
     brandOptions: SelectOption[];
     typeOptions: SelectOption[];
     categoryOptions: SelectOption[];
+    vehicleTypeOptions: SelectOption[];
     depotOptions: SelectOption[];
     supplierOptions: SelectOption[];
 }
@@ -128,6 +129,7 @@ export default function ProductDetailsModal({
                                                 brandOptions,
                                                 typeOptions,
                                                 categoryOptions,
+                                                vehicleTypeOptions,
                                                 supplierOptions,
                                             }: ProductDetailsModalProps) {
     const productDepotRows = useMemo(() => {
@@ -207,6 +209,20 @@ export default function ProductDetailsModal({
         if (!selected) return;
         setProductForm((prev) =>
             prev ? { ...prev, categoryId: selected.id, category: selected.name } : prev
+        );
+    };
+
+    const handleVehicleTypeChange = (newVehicleTypeId: number) => {
+        const selected = vehicleTypeOptions.find((option) => option.id === newVehicleTypeId);
+        if (!selected) return;
+        setProductForm((prev) =>
+            prev
+                ? {
+                    ...prev,
+                    vehicleTypeId: selected.id,
+                    vehicleTypeName: selected.name,
+                }
+                : prev
         );
     };
 
@@ -382,6 +398,25 @@ export default function ProductDetailsModal({
                                     </select>
                                 ) : (
                                     <input value={productForm.type} readOnly style={readOnlyStyle} />
+                                )}
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <label style={labelStyle}>Vehicle Type</label>
+                                {isProductEditing ? (
+                                    <select
+                                        value={productForm.vehicleTypeId}
+                                        onChange={(e) => handleVehicleTypeChange(Number(e.target.value))}
+                                        style={inputStyle}
+                                    >
+                                        {vehicleTypeOptions.map((option) => (
+                                            <option key={option.id} value={option.id}>
+                                                {option.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input value={productForm.vehicleTypeName} readOnly style={readOnlyStyle} />
                                 )}
                             </div>
 

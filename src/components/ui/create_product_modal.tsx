@@ -18,6 +18,7 @@ export type CreateProductFormData = {
     status: string;
     typeId: number | "";
     categoryId: number | "";
+    vehicleTypeId: number | "";
     productDepots: DepotFormRow[];
 };
 
@@ -33,6 +34,7 @@ interface CreateProductModalProps {
     brands: Option[];
     types: Option[];
     categories: Option[];
+    vehicleTypes: Option[];
     depots: Option[];
     suppliers: Option[];
     onClose: () => void;
@@ -142,6 +144,7 @@ export default function CreateProductModal({
                                                brands,
                                                types,
                                                categories,
+                                               vehicleTypes,
                                                depots,
                                                suppliers,
                                                onClose,
@@ -278,6 +281,22 @@ export default function CreateProductModal({
                                     {categories.map((category) => (
                                         <option key={category.id} value={category.id}>
                                             {category.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <label style={labelStyle}>Vehicle Type</label>
+                                <select
+                                    value={formData.vehicleTypeId}
+                                    onChange={(e) => onChange("vehicleTypeId", e.target.value === "" ? "" : Number(e.target.value))}
+                                    style={inputStyle}
+                                >
+                                    <option value="">Select vehicle type</option>
+                                    {vehicleTypes.map((vehicleType) => (
+                                        <option key={vehicleType.id} value={vehicleType.id}>
+                                            {vehicleType.name}
                                         </option>
                                     ))}
                                 </select>

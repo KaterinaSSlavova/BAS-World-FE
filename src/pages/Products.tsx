@@ -6,6 +6,7 @@ import { getDepotOverview } from "../lib/api/depots";
 import { getAllCategories } from "../lib/api/categories";
 import { getAllTypes } from "../lib/api/types";
 import { getAllSuppliers } from "../lib/api/suppliers";
+import { getAllVehicleTypes } from "../lib/api/vehicleTypes";
 import CreateProductModal, {
     type CreateProductFormData,
     type DepotFormRow,
@@ -23,6 +24,7 @@ type BackendProductWithDepots = {
         status: string;
         type?: { id: number; name: string };
         category?: { id: number; name: string };
+        vehicleType?: { id: number; name: string };
     };
     depots: {
         depot: {
@@ -51,11 +53,13 @@ export type ProductRow = {
     brandId: number;
     categoryId: number;
     typeId: number;
+    vehicleTypeId: number;
     sku: string;
     name: string;
     brand: string;
     category: string;
     type: string;
+    vehicleTypeName: string;
     depotName: string;
     price: number;
     costPrice: number;
@@ -100,11 +104,13 @@ function mapBackendProductToFrontend(item: BackendProductWithDepots): ProductRow
         brandId: item.product.brand?.id ?? 0,
         categoryId: item.product.category?.id ?? 0,
         typeId: item.product.type?.id ?? 0,
+        vehicleTypeId: item.product.vehicleType?.id ?? 0,
         sku: item.product.sku,
         name: item.product.name,
         brand: item.product.brand?.name ?? "Unknown",
         category: item.product.category?.name ?? "Unknown",
         type: item.product.type?.name ?? "Unknown",
+        vehicleTypeName: item.product.vehicleType?.name ?? "Unknown",
         depotName: depotItem.depot.depotName,
         price: Number(depotItem.salePrice ?? 0),
         costPrice: Number(depotItem.costPrice ?? 0),
@@ -239,6 +245,7 @@ export default function Products() {
     const [brandOptions, setBrandOptions] = useState<SelectOption[]>([]);
     const [typeOptions, setTypeOptions] = useState<SelectOption[]>([]);
     const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
+    const [vehicleTypeOptions, setVehicleTypeOptions] = useState<SelectOption[]>([]);
     const [depotOptions, setDepotOptions] = useState<SelectOption[]>([]);
     const [supplierOptions, setSupplierOptions] = useState<SelectOption[]>([]);
 
@@ -258,6 +265,7 @@ export default function Products() {
         status: "Active",
         typeId: "",
         categoryId: "",
+        vehicleTypeId: "",
         productDepots: [{ ...emptyDepotRow }],
     });
 
@@ -284,12 +292,13 @@ export default function Products() {
 
     const loadOptions = async () => {
         try {
-            const [brands, types, categories, depots, suppliers] = await Promise.all([
+            const [brands, types, categories, depots, suppliers, vehicleTypes] = await Promise.all([
                 getAllBrands(),
                 getAllTypes(),
                 getAllCategories(),
                 getDepotOverview(),
                 getAllSuppliers(),
+                getAllVehicleTypes(),
             ]);
 
             setBrandOptions((brands ?? []).map((b: any) => ({ id: b.id, name: b.name })));
@@ -300,6 +309,11 @@ export default function Products() {
                 (suppliers ?? [])
                     .filter((s: any) => !s.archived)
                     .map((s: any) => ({ id: s.id, name: s.name }))
+            );
+            setVehicleTypeOptions(
+                (vehicleTypes ?? [])
+                    .filter((v: any) => !v.archived)
+                    .map((v: any) => ({ id: v.id, name: v.name }))
             );
         } catch (err) {
             console.error("Failed to load select options", err);
@@ -352,12 +366,13 @@ export default function Products() {
             status: "Active",
             typeId: "",
             categoryId: "",
+            vehicleTypeId: "",
             productDepots: [{ ...emptyDepotRow }],
         });
     };
 
     const handleCreateProduct = async () => {
-        const { sku, name, description, brandId, status, typeId, categoryId, productDepots } = newProduct;
+        const { sku, name, description, brandId, status, typeId, categoryId, vehicleTypeId, productDepots } = newProduct;
 
         const hasInvalidDepot = productDepots.some(
             (d) =>
@@ -370,8 +385,8 @@ export default function Products() {
         );
 
         if (!sku.trim() || !name.trim() || !description.trim() || brandId === "" || !status ||
-            typeId === "" || categoryId === "" || productDepots.length === 0 || hasInvalidDepot) {
-            alert("Please fill all required fields including stock threshold and supplier.");
+            typeId === "" || categoryId === "" || vehicleTypeId === "" || productDepots.length === 0 || hasInvalidDepot) {
+            alert("Please fill all required fields including vehicle type, stock threshold and supplier.");
             return;
         }
 
@@ -384,7 +399,7 @@ export default function Products() {
                 status: toBackendStatus(status),
                 typeId: Number(typeId),
                 categoryId: Number(categoryId),
-                vehicleTypeId: 1,
+                vehicleTypeId: Number(vehicleTypeId),
                 supplierId: Number(productDepots[0].supplierId),
                 productDepots: productDepots.map((depot) => ({
                     depotId: Number(depot.depotId),
@@ -420,7 +435,7 @@ export default function Products() {
                 status: toBackendStatus(updatedProduct.status),
                 typeId: Number(updatedProduct.typeId),
                 categoryId: Number(updatedProduct.categoryId),
-                vehicleTypeId: 1,
+                vehicleTypeId: Number(updatedProduct.vehicleTypeId),
                 supplierId: Number(updatedDepots[0]?.supplierId ?? updatedProduct.supplierId),
                 productDepots: updatedDepots.map((depot) => ({
                     depotId: Number(depot.depotId),
@@ -449,7 +464,8 @@ export default function Products() {
                 p.name.toLowerCase().includes(search.toLowerCase()) ||
                 p.sku.toLowerCase().includes(search.toLowerCase()) ||
                 p.brand.toLowerCase().includes(search.toLowerCase()) ||
-                p.supplierName.toLowerCase().includes(search.toLowerCase());
+                p.supplierName.toLowerCase().includes(search.toLowerCase()) ||
+                p.vehicleTypeName.toLowerCase().includes(search.toLowerCase());
 
             const matchesCategory = categoryFilter === "all" || String(p.categoryId) === categoryFilter;
             const matchesBrand = brandFilter === "all" || String(p.brandId) === brandFilter;
@@ -614,6 +630,7 @@ export default function Products() {
                                         <MobileDetailRow label="Brand" value={product.brand} />
                                         <MobileDetailRow label="Category" value={product.category} />
                                         <MobileDetailRow label="Type" value={product.type} />
+                                        <MobileDetailRow label="Vehicle Type" value={product.vehicleTypeName} />
                                         <MobileDetailRow label="Depots" value={getDepotDisplay(product.productId)} />
                                         <MobileDetailRow label="Sale Price" value={formatPrice(product.salePrice)} />
                                         <MobileDetailRow label="Cost Price" value={formatPrice(product.costPrice)} />
@@ -646,7 +663,7 @@ export default function Products() {
                                 <div>Sale</div>
                                 <div>Total Stock</div>
                                 <div>Status</div>
-                                <div>Type</div>
+                                <div>Vehicle Type</div>
                                 <div>Depots</div>
                                 <div>Availability</div>
                             </div>
@@ -677,7 +694,7 @@ export default function Products() {
                                     <div style={{ fontSize: 16, color: "#273142", fontWeight: 600 }}>{formatPrice(product.salePrice)}</div>
                                     <div style={{ fontSize: 16, color: "#273142", fontWeight: 600 }}>{getTotalStock(product.productId)}</div>
                                     <div><StatusPill status={product.status} /></div>
-                                    <div style={cellStyle}>{product.type}</div>
+                                    <div style={cellStyle}>{product.vehicleTypeName}</div>
                                     <div style={cellStyle}>{getDepotDisplay(product.productId)}</div>
                                     <div><AvailabilityPill available={isAvailableInAnyDepot(product.productId)} /></div>
                                 </div>
@@ -693,6 +710,7 @@ export default function Products() {
                 brands={brandOptions}
                 types={typeOptions}
                 categories={categoryOptions}
+                vehicleTypes={vehicleTypeOptions}
                 depots={depotOptions}
                 suppliers={supplierOptions}
                 onClose={() => {
@@ -715,6 +733,7 @@ export default function Products() {
                 brandOptions={brandOptions}
                 typeOptions={typeOptions}
                 categoryOptions={categoryOptions}
+                vehicleTypeOptions={vehicleTypeOptions}
                 depotOptions={depotOptions}
                 supplierOptions={supplierOptions}
             />
