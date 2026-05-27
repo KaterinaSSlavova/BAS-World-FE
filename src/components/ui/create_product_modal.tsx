@@ -7,6 +7,7 @@ export type DepotFormRow = {
     salePrice: number | "";
     available: boolean;
     stockThreshold: number | "";
+    supplierId: number | "";
 };
 
 export type CreateProductFormData = {
@@ -17,6 +18,7 @@ export type CreateProductFormData = {
     status: string;
     typeId: number | "";
     categoryId: number | "";
+    vehicleTypeId: number | "";
     productDepots: DepotFormRow[];
 };
 
@@ -32,7 +34,9 @@ interface CreateProductModalProps {
     brands: Option[];
     types: Option[];
     categories: Option[];
+    vehicleTypes: Option[];
     depots: Option[];
+    suppliers: Option[];
     onClose: () => void;
     onChange: (
         field: keyof Omit<CreateProductFormData, "productDepots">,
@@ -140,7 +144,9 @@ export default function CreateProductModal({
                                                brands,
                                                types,
                                                categories,
+                                               vehicleTypes,
                                                depots,
+                                               suppliers,
                                                onClose,
                                                onChange,
                                                onDepotChange,
@@ -280,6 +286,22 @@ export default function CreateProductModal({
                                 </select>
                             </div>
 
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <label style={labelStyle}>Vehicle Type</label>
+                                <select
+                                    value={formData.vehicleTypeId}
+                                    onChange={(e) => onChange("vehicleTypeId", e.target.value === "" ? "" : Number(e.target.value))}
+                                    style={inputStyle}
+                                >
+                                    <option value="">Select vehicle type</option>
+                                    {vehicleTypes.map((vehicleType) => (
+                                        <option key={vehicleType.id} value={vehicleType.id}>
+                                            {vehicleType.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column" }}>
                                 <label style={labelStyle}>Description</label>
                                 <textarea
@@ -307,7 +329,7 @@ export default function CreateProductModal({
                                     Depot Details
                                 </h3>
                                 <p style={{ margin: "4px 0 0", fontSize: 13, color: "#4b5563", fontWeight: 500 }}>
-                                    Configure stock, pricing and availability per depot.
+                                    Configure stock, pricing, threshold, supplier and availability per depot.
                                 </p>
                             </div>
 
@@ -361,7 +383,7 @@ export default function CreateProductModal({
                                     )}
                                 </div>
 
-                                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 1fr", gap: 12 }}>
+                                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 1fr 1.3fr", gap: 12 }}>
                                     <div style={{ display: "flex", flexDirection: "column" }}>
                                         <label style={labelStyle}>Depot</label>
                                         <select
@@ -430,6 +452,24 @@ export default function CreateProductModal({
                                             placeholder="10"
                                             style={inputStyle}
                                         />
+                                    </div>
+
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                        <label style={labelStyle}>Supplier</label>
+                                        <select
+                                            value={row.supplierId}
+                                            onChange={(e) =>
+                                                onDepotChange(index, "supplierId", e.target.value === "" ? "" : Number(e.target.value))
+                                            }
+                                            style={inputStyle}
+                                        >
+                                            <option value="">Select supplier</option>
+                                            {suppliers.map((supplier) => (
+                                                <option key={supplier.id} value={supplier.id}>
+                                                    {supplier.name}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                             </div>

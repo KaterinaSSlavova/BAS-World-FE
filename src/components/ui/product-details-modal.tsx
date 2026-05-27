@@ -10,7 +10,9 @@ interface ProductDetailsModalProps {
     brandOptions: SelectOption[];
     typeOptions: SelectOption[];
     categoryOptions: SelectOption[];
+    vehicleTypeOptions: SelectOption[];
     depotOptions: SelectOption[];
+    supplierOptions: SelectOption[];
 }
 
 const overlayStyle: CSSProperties = {
@@ -127,6 +129,8 @@ export default function ProductDetailsModal({
                                                 brandOptions,
                                                 typeOptions,
                                                 categoryOptions,
+                                                vehicleTypeOptions,
+                                                supplierOptions,
                                             }: ProductDetailsModalProps) {
     const productDepotRows = useMemo(() => {
         if (!product) return [];
@@ -168,6 +172,22 @@ export default function ProductDetailsModal({
         );
     };
 
+    const handleSupplierChange = (depotId: number, supplierId: number) => {
+        const selected = supplierOptions.find((option) => option.id === supplierId);
+
+        setDepotForms((prev) =>
+            prev.map((row) =>
+                row.depotId === depotId
+                    ? {
+                        ...row,
+                        supplierId,
+                        supplierName: selected?.name ?? "Unknown",
+                    }
+                    : row
+            )
+        );
+    };
+
     const handleBrandChange = (newBrandId: number) => {
         const selected = brandOptions.find((option) => option.id === newBrandId);
         if (!selected) return;
@@ -192,6 +212,20 @@ export default function ProductDetailsModal({
         );
     };
 
+    const handleVehicleTypeChange = (newVehicleTypeId: number) => {
+        const selected = vehicleTypeOptions.find((option) => option.id === newVehicleTypeId);
+        if (!selected) return;
+        setProductForm((prev) =>
+            prev
+                ? {
+                    ...prev,
+                    vehicleTypeId: selected.id,
+                    vehicleTypeName: selected.name,
+                }
+                : prev
+        );
+    };
+
     const handleCancelProductEdit = () => {
         setProductForm(product);
         setIsProductEditing(false);
@@ -200,9 +234,11 @@ export default function ProductDetailsModal({
     const handleCancelDepotEdit = (depotId: number) => {
         const originalRow = productDepotRows.find((row) => row.depotId === depotId);
         if (!originalRow) return;
+
         setDepotForms((prev) =>
             prev.map((row) => (row.depotId === depotId ? originalRow : row))
         );
+
         setEditingDepotId(null);
     };
 
@@ -275,6 +311,7 @@ export default function ProductDetailsModal({
                                     >
                                         Cancel
                                     </button>
+
                                     <button
                                         type="button"
                                         onClick={handleSave}
@@ -316,7 +353,9 @@ export default function ProductDetailsModal({
                                         style={inputStyle}
                                     >
                                         {brandOptions.map((option) => (
-                                            <option key={option.id} value={option.id}>{option.name}</option>
+                                            <option key={option.id} value={option.id}>
+                                                {option.name}
+                                            </option>
                                         ))}
                                     </select>
                                 ) : (
@@ -333,7 +372,9 @@ export default function ProductDetailsModal({
                                         style={inputStyle}
                                     >
                                         {categoryOptions.map((option) => (
-                                            <option key={option.id} value={option.id}>{option.name}</option>
+                                            <option key={option.id} value={option.id}>
+                                                {option.name}
+                                            </option>
                                         ))}
                                     </select>
                                 ) : (
@@ -350,11 +391,32 @@ export default function ProductDetailsModal({
                                         style={inputStyle}
                                     >
                                         {typeOptions.map((option) => (
-                                            <option key={option.id} value={option.id}>{option.name}</option>
+                                            <option key={option.id} value={option.id}>
+                                                {option.name}
+                                            </option>
                                         ))}
                                     </select>
                                 ) : (
                                     <input value={productForm.type} readOnly style={readOnlyStyle} />
+                                )}
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <label style={labelStyle}>Vehicle Type</label>
+                                {isProductEditing ? (
+                                    <select
+                                        value={productForm.vehicleTypeId}
+                                        onChange={(e) => handleVehicleTypeChange(Number(e.target.value))}
+                                        style={inputStyle}
+                                    >
+                                        {vehicleTypeOptions.map((option) => (
+                                            <option key={option.id} value={option.id}>
+                                                {option.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input value={productForm.vehicleTypeName} readOnly style={readOnlyStyle} />
                                 )}
                             </div>
 
@@ -391,7 +453,7 @@ export default function ProductDetailsModal({
                                 Depot Details
                             </h3>
                             <p style={{ margin: "4px 0 0", fontSize: 13, color: "#4b5563", fontWeight: 500 }}>
-                                Manage stock, pricing, threshold and availability for each depot.
+                                Manage stock, pricing, threshold, supplier and availability for each depot.
                             </p>
                         </div>
 
@@ -434,6 +496,7 @@ export default function ProductDetailsModal({
                                                 >
                                                     Cancel
                                                 </button>
+
                                                 <button
                                                     type="button"
                                                     onClick={handleSave}
@@ -450,7 +513,7 @@ export default function ProductDetailsModal({
                                         )}
                                     </div>
 
-                                    <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr 1fr", gap: 12 }}>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr 1fr 1fr 1.3fr", gap: 12 }}>
                                         <div style={{ display: "flex", flexDirection: "column" }}>
                                             <label style={labelStyle}>Depot</label>
                                             <input value={depotRow.depotName} readOnly style={readOnlyStyle} />
@@ -506,6 +569,32 @@ export default function ProductDetailsModal({
                                                 }
                                                 style={isDepotEditing ? inputStyle : readOnlyStyle}
                                             />
+                                        </div>
+
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <label style={labelStyle}>Supplier</label>
+                                            {isDepotEditing ? (
+                                                <select
+                                                    value={depotRow.supplierId}
+                                                    onChange={(e) =>
+                                                        handleSupplierChange(depotRow.depotId, Number(e.target.value))
+                                                    }
+                                                    style={inputStyle}
+                                                >
+                                                    <option value={0}>Select supplier</option>
+                                                    {supplierOptions.map((option) => (
+                                                        <option key={option.id} value={option.id}>
+                                                            {option.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <input
+                                                    value={depotRow.supplierName || "Unknown"}
+                                                    readOnly
+                                                    style={readOnlyStyle}
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 </div>
