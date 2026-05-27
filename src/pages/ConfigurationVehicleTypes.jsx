@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { createVehicleType, updateVehicleType, archiveVehicleType } from "../lib/api/vehicleTypes";
-import { ConfirmArchiveModal } from "./ConfigurationShared";
+import { ConfirmArchiveModal } from "./ConfigurationShared.jsx";
 
 const PER_PAGE = 8;
 
@@ -65,7 +65,7 @@ function VehicleTypesTable({ items, onEdit, onArchive, loading, error }) {
     );
 }
 
-export default function Configurationvehicletypes({ vehicleTypes, loading, error, search, onSearchChange, showArchived, onToggleArchived, onReload }) {
+export default function ConfigurationVehicleTypes({ vehicleTypes, loading, error, search, onSearchChange, showArchived, onToggleArchived, onReload }) {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState("create");
     const [modalValue, setModalValue] = useState("");

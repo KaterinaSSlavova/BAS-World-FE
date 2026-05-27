@@ -3,12 +3,12 @@ import AppLayout from "../components/AppLayout";
 import { getAllBrands } from "../lib/api/brands";
 import { getAllCategories } from "../lib/api/categories";
 import { getAllTypes } from "../lib/api/types";
-import { CountPill } from "./Configurationshared.jsx";
-import ConfigurationTypes from "./Configurationtypes.jsx";
-import ConfigurationCategories from "./Configurationcategories.jsx";
-import ConfigurationBrands from "./Configurationbrands.jsx";
-import ConfigurationSuppliers from "./Configurationsuppliers.jsx";
-import Configurationvehicletypes from "./Configurationvehicletypes.jsx";
+import { CountPill } from "./ConfigurationShared.jsx";
+import ConfigurationTypes from "./ConfigurationTypes.jsx";
+import ConfigurationCategories from "./ConfigurationCategories.jsx";
+import ConfigurationBrands from "./ConfigurationBrands.jsx";
+import ConfigurationSuppliers from "./ConfigurationSuppliers.jsx";
+import ConfigurationVehicleTypes from "./ConfigurationVehicleTypes.jsx";
 import { getAllSuppliers } from "../lib/api/suppliers.ts";
 import { getAllVehicleTypes } from "../lib/api/vehicleTypes.ts";
 
@@ -161,7 +161,7 @@ export default function Configuration() {
                     />
                 )}
                 {activeTab === "vehicleTypes" && (
-                    <Configurationvehicletypes
+                    <ConfigurationVehicleTypes
                         vehicleTypes={vehicleTypes} loading={vehicleTypesLoading} error={vehicleTypesError}
                         search={search} onSearchChange={setSearch}
                         showArchived={showArchivedVehicleTypes}

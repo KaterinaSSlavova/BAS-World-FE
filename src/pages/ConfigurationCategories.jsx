@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { createCategory, updateCategory, archiveCategory } from "../lib/api/categories";
-import { ConfirmArchiveModal } from "./ConfigurationShared";
+import { ConfirmArchiveModal } from "./ConfigurationShared.jsx";
 
 const PER_PAGE = 8;
 

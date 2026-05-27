@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { createType, updateType, archiveType } from "../lib/api/types";
-import { ConfirmArchiveModal } from "./ConfigurationShared";
+import { ConfirmArchiveModal } from "./ConfigurationShared.jsx";
 
 const PER_PAGE = 8;
 

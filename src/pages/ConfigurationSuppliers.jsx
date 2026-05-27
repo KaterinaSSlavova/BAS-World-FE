@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { createSupplier, updateSupplier, archiveSupplier } from "../lib/api/suppliers";
 import { uploadBrandPicture } from "../lib/uploadBrandPicture";
-import { ConfirmArchiveModal } from "./ConfigurationShared";
+import { ConfirmArchiveModal } from "./ConfigurationShared.jsx";
 
 const PER_PAGE = 8;
 

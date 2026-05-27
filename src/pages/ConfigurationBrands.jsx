@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { createBrand, updateBrand, archiveBrand } from "../lib/api/brands";
 import { uploadBrandPicture } from "../lib/uploadBrandPicture";
-import { ConfirmArchiveModal } from "./ConfigurationShared";
+import { ConfirmArchiveModal } from "./ConfigurationShared.jsx";
 
 const PER_PAGE = 8;
 
