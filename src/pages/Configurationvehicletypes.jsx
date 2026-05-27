@@ -65,7 +65,7 @@ function VehicleTypesTable({ items, onEdit, onArchive, loading, error }) {
     );
 }
 
-export default function ConfigurationVehicleTypes({ vehicleTypes, loading, error, search, onSearchChange, showArchived, onToggleArchived, onReload }) {
+export default function Configurationvehicletypes({ vehicleTypes, loading, error, search, onSearchChange, showArchived, onToggleArchived, onReload }) {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState("create");
     const [modalValue, setModalValue] = useState("");
