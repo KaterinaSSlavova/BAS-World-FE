@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { createCategory, updateCategory, archiveCategory } from "../lib/api/categories";
 import { ConfirmArchiveModal } from "./ConfigurationShared";
 
-const PER_PAGE = 7;
+const PER_PAGE = 8;
 
 // ─── Pagination ───────────────────────────────────────────────
 
@@ -165,19 +165,19 @@ function CategoryTable({ items, allCategories, onEdit, onArchive, loading, error
                                         }}>{parentName}</span>
                                         : <span style={{ color: "#c4c9d2" }}>—</span>}
                                 </div>
-                                <div style={{ display: "flex", gap: 8 }}>
+                                { !item.archived && <div style={{ display: "flex", gap: 8 }}>
                                     <button onClick={() => onEdit(item)} style={{
                                         padding: "8px 16px", borderRadius: 9, border: "1px solid #d9dee5",
                                         background: "#fff", fontSize: 14, fontWeight: 700, color: "#374151", cursor: "pointer",
                                     }}>Edit</button>
                                     <button onClick={() => onArchive(item)} style={{
                                         padding: "8px 16px", borderRadius: 9,
-                                        border: item.archived ? "1px solid #b9dec6" : "1px solid #fde9b0",
-                                        background: item.archived ? "#f0faf4" : "#fffbf0",
+                                        border: "1px solid #fde9b0",
+                                        background: "#fffbf0",
                                         fontSize: 14, fontWeight: 700,
-                                        color: item.archived ? "#2e9d5b" : "#d97706", cursor: "pointer",
-                                    }}>{item.archived ? "Unarchive" : "Archive"}</button>
-                                </div>
+                                        color: "#d97706", cursor: "pointer",
+                                    }}>Archive</button>
+                                </div> }
                             </div>
                         );
                     })}

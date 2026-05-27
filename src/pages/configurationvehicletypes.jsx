@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { createVehicleType, updateVehicleType, archiveVehicleType } from "../lib/api/vehicleTypes";
 import { ConfirmArchiveModal } from "./ConfigurationShared";
 
-const PER_PAGE = 7;
+const PER_PAGE = 8;
 
 function Pagination({ total, page, onPage }) {
     const totalPages = Math.ceil(total / PER_PAGE);
@@ -53,10 +53,10 @@ function VehicleTypesTable({ items, onEdit, onArchive, loading, error }) {
                                 <span style={{ fontSize: 16, fontWeight: 700, color: "#273142" }}>{item.name}</span>
                                 {item.archived && <span style={{ padding: "2px 8px", borderRadius: 999, background: "#fff7e8", color: "#d97706", border: "1px solid #f5d29c", fontSize: 11, fontWeight: 700 }}>Archived</span>}
                             </div>
-                            <div style={{ display: "flex", gap: 8 }}>
+                            { !item.archived && <div style={{ display: "flex", gap: 8 }}>
                                 <button onClick={() => onEdit(item)} style={{ padding: "8px 16px", borderRadius: 9, border: "1px solid #d9dee5", background: "#fff", fontSize: 14, fontWeight: 700, color: "#374151", cursor: "pointer" }}>Edit</button>
-                                <button onClick={() => onArchive(item)} style={{ padding: "8px 16px", borderRadius: 9, border: item.archived ? "1px solid #b9dec6" : "1px solid #fde9b0", background: item.archived ? "#f0faf4" : "#fffbf0", fontSize: 14, fontWeight: 700, color: item.archived ? "#2e9d5b" : "#d97706", cursor: "pointer" }}>{item.archived ? "Unarchive" : "Archive"}</button>
-                            </div>
+                                <button onClick={() => onArchive(item)} style={{ padding: "8px 16px", borderRadius: 9, border: "1px solid #fde9b0", background: "#fffbf0", fontSize: 14, fontWeight: 700, color: "#d97706", cursor: "pointer" }}>Archive</button>
+                            </div> }
                         </div>
                     ))}
                 </>

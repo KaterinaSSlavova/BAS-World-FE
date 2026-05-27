@@ -3,7 +3,7 @@ import { createSupplier, updateSupplier, archiveSupplier } from "../lib/api/supp
 import { uploadBrandPicture } from "../lib/uploadBrandPicture";
 import { ConfirmArchiveModal } from "./ConfigurationShared";
 
-const PER_PAGE = 21;
+const PER_PAGE = 8;
 
 function Pagination({ total, page, onPage }) {
     const totalPages = Math.ceil(total / PER_PAGE);
@@ -92,10 +92,10 @@ function SupplierCard({ supplier, onEdit, onArchive }) {
                             <a href={supplier.picture} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: "#2e9d5b", textDecoration: "underline" }}>{supplier.picture}</a>
                         </div>
                     )}
-                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                    { !supplier.archived && <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
                         <button onClick={(e) => { e.stopPropagation(); onEdit(supplier); }} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: "1px solid #d9dee5", background: "#fff", fontSize: 14, fontWeight: 700, color: "#374151", cursor: "pointer" }}>Edit</button>
-                        <button onClick={(e) => { e.stopPropagation(); onArchive(supplier); }} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: supplier.archived ? "1px solid #b9dec6" : "1px solid #fde9b0", background: supplier.archived ? "#f0faf4" : "#fffbf0", fontSize: 14, fontWeight: 700, color: supplier.archived ? "#2e9d5b" : "#d97706", cursor: "pointer" }}>{supplier.archived ? "Unarchive" : "Archive"}</button>
-                    </div>
+                        <button onClick={(e) => { e.stopPropagation(); onArchive(supplier); }} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: "1px solid #fde9b0", background: "#fffbf0", fontSize: 14, fontWeight: 700, color: "#d97706", cursor: "pointer" }}>Archive</button>
+                    </div> }
                 </div>
             )}
         </div>
