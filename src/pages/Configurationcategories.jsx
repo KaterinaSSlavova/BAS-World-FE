@@ -1,6 +1,41 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createCategory, updateCategory, archiveCategory } from "../lib/api/categories";
 import { ConfirmArchiveModal } from "./ConfigurationShared";
+
+const PER_PAGE = 7;
+
+// ─── Pagination ───────────────────────────────────────────────
+
+function Pagination({ total, page, onPage }) {
+    const totalPages = Math.ceil(total / PER_PAGE);
+    if (totalPages <= 1) return null;
+    return (
+        <div style={{ display: "flex", gap: 6, justifyContent: "center", alignItems: "center", marginTop: 8 }}>
+            <button onClick={() => onPage(page - 1)} disabled={page === 0} style={{
+                padding: "8px 14px", borderRadius: 9, border: "1px solid #d9dee5",
+                background: "#fff", fontWeight: 700, fontSize: 14,
+                color: page === 0 ? "#c4c9d2" : "#374151",
+                cursor: page === 0 ? "default" : "pointer",
+            }}>‹</button>
+            {Array.from({ length: totalPages }, (_, i) => (
+                <button key={i} onClick={() => onPage(i)} style={{
+                    padding: "8px 14px", borderRadius: 9,
+                    border: i === page ? "1px solid #2e9d5b" : "1px solid #d9dee5",
+                    background: i === page ? "#2e9d5b" : "#fff",
+                    fontWeight: 700, fontSize: 14,
+                    color: i === page ? "#fff" : "#374151",
+                    cursor: "pointer",
+                }}>{i + 1}</button>
+            ))}
+            <button onClick={() => onPage(page + 1)} disabled={page === totalPages - 1} style={{
+                padding: "8px 14px", borderRadius: 9, border: "1px solid #d9dee5",
+                background: "#fff", fontWeight: 700, fontSize: 14,
+                color: page === totalPages - 1 ? "#c4c9d2" : "#374151",
+                cursor: page === totalPages - 1 ? "default" : "pointer",
+            }}>›</button>
+        </div>
+    );
+}
 
 // ─── Category Modal ───────────────────────────────────────────
 
@@ -18,20 +53,14 @@ function CategoryModal({ open, mode, category, allCategories, onSubmit, onClose 
     const parentOptions = allCategories.filter((c) => !c.archived && c.id !== category?.id);
 
     return (
-        <div
-            style={{
-                position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)",
-                zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
-            }}
-            onClick={onClose}
-        >
-            <div
-                style={{
-                    background: "#fff", borderRadius: 18, padding: "32px 28px",
-                    width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(15,23,42,0.18)",
-                }}
-                onClick={(e) => e.stopPropagation()}
-            >
+        <div style={{
+            position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)",
+            zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+        }} onClick={onClose}>
+            <div style={{
+                background: "#fff", borderRadius: 18, padding: "32px 28px",
+                width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(15,23,42,0.18)",
+            }} onClick={(e) => e.stopPropagation()}>
                 <h2 style={{ margin: "0 0 24px", fontSize: 22, fontWeight: 800, color: "#1f2937" }}>
                     {mode === "edit" ? "Edit Category" : "Add Category"}
                 </h2>
@@ -56,17 +85,13 @@ function CategoryModal({ open, mode, category, allCategories, onSubmit, onClose 
                     Parent Category{" "}
                     <span style={{ fontWeight: 400, textTransform: "none", color: "#b0b8c4" }}>(optional)</span>
                 </label>
-                <select
-                    value={parentId}
-                    onChange={(e) => setParentId(e.target.value)}
-                    style={{
-                        width: "100%", boxSizing: "border-box", padding: "13px 16px",
-                        borderRadius: 12, border: "1.5px solid #d9dee5", fontSize: 16,
-                        color: parentId === "" ? "#b0b8c4" : "#273142",
-                        outline: "none", marginBottom: 28, fontFamily: "inherit",
-                        background: "#fff", cursor: "pointer",
-                    }}
-                >
+                <select value={parentId} onChange={(e) => setParentId(e.target.value)} style={{
+                    width: "100%", boxSizing: "border-box", padding: "13px 16px",
+                    borderRadius: 12, border: "1.5px solid #d9dee5", fontSize: 16,
+                    color: parentId === "" ? "#b0b8c4" : "#273142",
+                    outline: "none", marginBottom: 28, fontFamily: "inherit",
+                    background: "#fff", cursor: "pointer",
+                }}>
                     <option value="">No parent</option>
                     {parentOptions.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
@@ -81,9 +106,7 @@ function CategoryModal({ open, mode, category, allCategories, onSubmit, onClose 
                         padding: "12px 22px", borderRadius: 10, border: "none",
                         background: "#2e9d5b", fontSize: 15, fontWeight: 700, color: "#fff",
                         cursor: "pointer", boxShadow: "0 4px 12px rgba(46,157,91,0.18)",
-                    }}>
-                        {mode === "edit" ? "Save Changes" : "Add Category"}
-                    </button>
+                    }}>{mode === "edit" ? "Save Changes" : "Add Category"}</button>
                 </div>
             </div>
         </div>
@@ -120,9 +143,8 @@ function CategoryTable({ items, allCategories, onEdit, onArchive, loading, error
                         return (
                             <div key={item.id} style={{
                                 display: "grid", gridTemplateColumns: "80px 1fr 160px auto",
-                                gap: 16, padding: "20px 24px",
-                                borderBottom: "1px solid #eef1f4", alignItems: "center",
-                                opacity: item.archived ? 0.6 : 1,
+                                gap: 16, padding: "20px 24px", borderBottom: "1px solid #eef1f4",
+                                alignItems: "center", opacity: item.archived ? 0.6 : 1,
                             }}>
                                 <div style={{ fontSize: 14, color: "#7b8494", fontWeight: 600 }}>#{item.id}</div>
                                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -154,9 +176,7 @@ function CategoryTable({ items, allCategories, onEdit, onArchive, loading, error
                                         background: item.archived ? "#f0faf4" : "#fffbf0",
                                         fontSize: 14, fontWeight: 700,
                                         color: item.archived ? "#2e9d5b" : "#d97706", cursor: "pointer",
-                                    }}>
-                                        {item.archived ? "Unarchive" : "Archive"}
-                                    </button>
+                                    }}>{item.archived ? "Unarchive" : "Archive"}</button>
                                 </div>
                             </div>
                         );
@@ -174,11 +194,16 @@ export default function ConfigurationCategories({ categories, loading, error, se
     const [modalMode, setModalMode] = useState("create");
     const [editingCategory, setEditingCategory] = useState(null);
     const [archiveModal, setArchiveModal] = useState({ open: false, item: null });
+    const [page, setPage] = useState(0);
 
     const filtered = useMemo(() => categories
             .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) && (showArchived || !c.archived))
             .sort((a, b) => b.id - a.id),
         [categories, search, showArchived]);
+
+    useEffect(() => { setPage(0); }, [search, showArchived]);
+
+    const paginated = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
 
     const openCreate = () => { setModalMode("create"); setEditingCategory(null); setModalOpen(true); };
     const openEdit = (cat) => { setModalMode("edit"); setEditingCategory(cat); setModalOpen(true); };
@@ -233,9 +258,7 @@ export default function ConfigurationCategories({ categories, loading, error, se
                         background: showArchived ? "#f0faf4" : "#fff",
                         color: showArchived ? "#2e9d5b" : "#273142",
                         fontWeight: 600, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap",
-                    }}>
-                        {showArchived ? "✓ Showing Archived" : "Show Archived"}
-                    </button>
+                    }}>{showArchived ? "✓ Showing Archived" : "Show Archived"}</button>
                     <button onClick={openCreate} style={{
                         height: 50, borderRadius: 12, padding: "0 22px",
                         background: "#2e9d5b", color: "#fff", border: "none",
@@ -245,10 +268,12 @@ export default function ConfigurationCategories({ categories, loading, error, se
                 </div>
             </div>
 
-            <CategoryTable items={filtered} allCategories={categories}
+            <CategoryTable items={paginated} allCategories={categories}
                            onEdit={openEdit}
                            onArchive={(item) => setArchiveModal({ open: true, item })}
                            loading={loading} error={error} />
+
+            <Pagination total={filtered.length} page={page} onPage={setPage} />
 
             <CategoryModal
                 key={`${modalOpen}-${editingCategory?.id}`}
