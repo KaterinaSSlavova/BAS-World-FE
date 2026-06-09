@@ -7,6 +7,8 @@ import ProductCountByDepotChart from "../components/analytics/ProductCountByDepo
 import InventoryValueByDepotChart from "../components/analytics/InventoryValueByDepotChart";
 import HighestQuantityProductCard from "../components/analytics/HighestQuantityProductCard";
 
+const FONT = "'Plus Jakarta Sans', system-ui, sans-serif";
+
 export default function AnalyticsPage() {
     const [analytics, setAnalytics] = useState<AnalyticsDTO | null>(null);
     const [loading, setLoading] = useState(true);
@@ -23,38 +25,38 @@ export default function AnalyticsPage() {
                 setLoading(false);
             }
         }
-
         loadAnalytics();
     }, []);
 
     if (loading) {
-        return <p className="p-8 text-gray-500">Loading analytics...</p>;
+        return (
+            <AppLayout scrollable>
+                <div style={{ padding: 40, color: "#888", fontFamily: FONT, fontSize: 14 }}>Loading analytics...</div>
+            </AppLayout>
+        );
     }
 
     if (error || !analytics) {
-        return <p className="p-8 text-red-500">{error}</p>;
+        return (
+            <AppLayout scrollable>
+                <div style={{ padding: 40, color: "#dc2626", fontFamily: FONT, fontSize: 14 }}>{error}</div>
+            </AppLayout>
+        );
     }
 
     return (
-        <AppLayout>
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <AppLayout scrollable>
+            <div style={{ display: "flex", flexDirection: "column", gap: 24, fontFamily: FONT, textAlign: "left" }}>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#1f2937" }}>
+                    <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.5px" }}>
                         Analytics
                     </h1>
-                    <p style={{ margin: "8px 0 0", color: "#7f8792", fontSize: 16 }}>
+                    <p style={{ margin: "4px 0 0", color: "#888", fontSize: 14 }}>
                         Inventory and stock performance insights
                     </p>
                 </div>
 
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                        gap: 24,
-                        alignItems: "stretch",
-                    }}
-                >
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 16, alignItems: "stretch" }}>
                     <AnalyticsCard title="Stock Value by Category" subtitle="Total stock value grouped by category">
                         <div style={{ height: 260 }}>
                             <StockValueByCategoryChart data={analytics.stockValueByCategory} />
