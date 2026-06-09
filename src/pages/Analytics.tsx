@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAnalytics, type AnalyticsDTO } from "../lib/api/analytics";
+import AppLayout from "../components/AppLayout";
 import AnalyticsCard from "../components/analytics/AnalyticsCard";
 import StockValueByCategoryChart from "../components/analytics/StockValueByCategoryChart";
 import ProductCountByDepotChart from "../components/analytics/ProductCountByDepotChart";
@@ -35,45 +36,48 @@ export default function AnalyticsPage() {
     }
 
     return (
-        <main className="p-8">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-                <p className="mt-1 text-gray-500">
-                    Inventory and stock performance insights
-                </p>
+        <AppLayout>
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                <div>
+                    <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#1f2937" }}>
+                        Analytics
+                    </h1>
+                    <p style={{ margin: "8px 0 0", color: "#7f8792", fontSize: 16 }}>
+                        Inventory and stock performance insights
+                    </p>
+                </div>
+
+                <div
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                        gap: 24,
+                        alignItems: "stretch",
+                    }}
+                >
+                    <AnalyticsCard title="Stock Value by Category" subtitle="Total stock value grouped by category">
+                        <div style={{ height: 260 }}>
+                            <StockValueByCategoryChart data={analytics.stockValueByCategory} />
+                        </div>
+                    </AnalyticsCard>
+
+                    <AnalyticsCard title="Product Count by Depot" subtitle="Products stored per depot">
+                        <div style={{ height: 260, maxWidth: 330, margin: "0 auto" }}>
+                            <ProductCountByDepotChart data={analytics.productCountByDepot} />
+                        </div>
+                    </AnalyticsCard>
+
+                    <AnalyticsCard title="Inventory Value by Depot" subtitle="Inventory totals across depots">
+                        <div style={{ height: 260 }}>
+                            <InventoryValueByDepotChart data={analytics.inventoryValueByDepot} />
+                        </div>
+                    </AnalyticsCard>
+
+                    <AnalyticsCard title="Highest Quantity Product" subtitle="Highest combined stock across all depots">
+                        <HighestQuantityProductCard product={analytics.highestQuantityProduct} />
+                    </AnalyticsCard>
+                </div>
             </div>
-
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                <AnalyticsCard
-                    title="Stock Value by Category"
-                    subtitle="Total stock value grouped by product category"
-                >
-                    <StockValueByCategoryChart data={analytics.stockValueByCategory} />
-                </AnalyticsCard>
-
-                <AnalyticsCard
-                    title="Product Count by Depot"
-                    subtitle="Amount of products stored per depot"
-                >
-                    <ProductCountByDepotChart data={analytics.productCountByDepot} />
-                </AnalyticsCard>
-
-                <AnalyticsCard
-                    title="Inventory Value by Depot"
-                    subtitle="Inventory totals across each depot"
-                >
-                    <InventoryValueByDepotChart data={analytics.inventoryValueByDepot} />
-                </AnalyticsCard>
-
-                <AnalyticsCard
-                    title="Highest Quantity Product"
-                    subtitle="Product with the highest combined stock across all depots"
-                >
-                    <HighestQuantityProductCard
-                        product={analytics.highestQuantityProduct}
-                    />
-                </AnalyticsCard>
-            </div>
-        </main>
+        </AppLayout>
     );
 }

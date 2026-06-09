@@ -6,49 +6,102 @@ type Props = {
 
 export default function HighestQuantityProductCard({ product }: Props) {
     if (!product) {
-        return (
-            <p className="text-sm text-gray-500">
-                No product data available.
-            </p>
-        );
+        return <p>No product found.</p>;
     }
 
     return (
-        <div className="space-y-3">
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 20,
+                textAlign: "left",
+            }}
+        >
             <div>
-                <p className="text-sm text-gray-500">Product name</p>
-                <p className="text-3xl font-bold text-gray-900">{product.name}</p>
+                <div
+                    style={{
+                        fontSize: 13,
+                        color: "#7f8792",
+                        textTransform: "uppercase",
+                        fontWeight: 700,
+                        marginBottom: 4,
+                    }}
+                >
+                    Product
+                </div>
+
+                <div
+                    style={{
+                        fontSize: 26,
+                        fontWeight: 800,
+                        color: "#1f2937",
+                    }}
+                >
+                    {product.name}
+                </div>
+
+                <div
+                    style={{
+                        color: "#7f8792",
+                        marginTop: 4,
+                    }}
+                >
+                    {product.sku}
+                </div>
             </div>
 
-            <div>
-                <p className="text-sm text-gray-500">SKU</p>
-                <p className="font-medium text-gray-800">{product.sku}</p>
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 16,
+                }}
+            >
+                <Info label="Category" value={product.category?.name} />
+                <Info label="Brand" value={product.brand?.name} />
+                <Info label="Type" value={product.type?.name} />
+                <Info label="Vehicle" value={product.vehicleType?.name} />
             </div>
 
-            {product.description && (
-                <p className="text-sm text-gray-600">{product.description}</p>
-            )}
+            <div
+                style={{
+                    padding: 16,
+                    background: "#f8fafc",
+                    borderRadius: 12,
+                    color: "#4b5563",
+                    lineHeight: 1.5,
+                }}
+            >
+                {product.description}
+            </div>
+        </div>
+    );
+}
 
-            <div className="grid grid-cols-2 gap-3 pt-2 text-sm">
-                <div>
-                    <p className="text-gray-500">Category</p>
-                    <p className="font-medium">{product.category?.name ?? "N/A"}</p>
-                </div>
+function Info({ label, value }: { label: string; value?: string }) {
+    return (
+        <div>
+            <div
+                style={{
+                    fontSize: 12,
+                    color: "#7f8792",
+                    textTransform: "uppercase",
+                    fontWeight: 700,
+                    marginBottom: 4,
+                }}
+            >
+                {label}
+            </div>
 
-                <div>
-                    <p className="text-gray-500">Brand</p>
-                    <p className="font-medium">{product.brand?.name ?? "N/A"}</p>
-                </div>
-
-                <div>
-                    <p className="text-gray-500">Type</p>
-                    <p className="font-medium">{product.type?.name ?? "N/A"}</p>
-                </div>
-
-                <div>
-                    <p className="text-gray-500">Vehicle type</p>
-                    <p className="font-medium">{product.vehicleType?.name ?? "N/A"}</p>
-                </div>
+            <div
+                style={{
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: "#1f2937",
+                }}
+            >
+                {value ?? "-"}
             </div>
         </div>
     );

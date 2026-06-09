@@ -4,20 +4,44 @@ type AnalyticsCardProps = {
     children: React.ReactNode;
 };
 
-export default function AnalyticsCard({
-                                          title,
-                                          subtitle,
-                                          children,
-                                      }: AnalyticsCardProps) {
+export default function AnalyticsCard({ title, subtitle, children }: AnalyticsCardProps) {
     return (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div
+            style={{
+                background: "#fff",
+                borderRadius: 18,
+                border: "1px solid #e6eaef",
+                padding: 24,
+                minHeight: 360,
+                boxSizing: "border-box",
+            }}
+        >
+            <h2
+                style={{
+                    margin: 0,
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: "#1f2937",
+                    textAlign: "left",
+                }}
+            >
+                {title}
+            </h2>
 
             {subtitle && (
-                <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+                <p
+                    style={{
+                        margin: "6px 0 20px",
+                        fontSize: 14,
+                        color: "#7f8792",
+                        textAlign: "left",
+                    }}
+                >
+                    {subtitle}
+                </p>
             )}
 
-            <div className="mt-6">{children}</div>
+            {children}
         </div>
     );
 }
