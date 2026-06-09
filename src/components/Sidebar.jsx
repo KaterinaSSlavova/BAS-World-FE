@@ -20,7 +20,7 @@ const navItems = [
     {
         group: "OPERATIONS",
         items: [
-            { label: "Business Rules", icon: "ti-list-check", path: "/business-rules" },
+
             { label: "Stock Alerts", icon: "ti-alert-triangle", path: "/stock-alerts" },
             { label: "Analytics", icon: "ti-chart-bar", path: "/analytics" },
         ],

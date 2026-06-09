@@ -14,6 +14,8 @@ import CreateProductModal, {
 import ProductDetailsModal from "../components/ui/product-details-modal";
 import AppLayout from "../components/AppLayout";
 
+const ITEMS_PER_PAGE = 8;
+
 type BackendProductWithDepots = {
     product: {
         id: number;
@@ -27,22 +29,13 @@ type BackendProductWithDepots = {
         vehicleType?: { id: number; name: string };
     };
     depots: {
-        depot: {
-            id: number;
-            depotName: string;
-            location?: string;
-        };
+        depot: { id: number; depotName: string; location?: string };
         stockQuantity: number;
         costPrice: number;
         salePrice: number;
         available: boolean;
         stockThreshold?: number;
-        supplier?: {
-            id: number;
-            name: string;
-            picture?: string;
-            archived?: boolean;
-        };
+        supplier?: { id: number; name: string; picture?: string; archived?: boolean };
     }[];
 };
 
@@ -73,19 +66,11 @@ export type ProductRow = {
     description: string;
 };
 
-export type SelectOption = {
-    id: number;
-    name: string;
-};
+export type SelectOption = { id: number; name: string };
 
 const emptyDepotRow: DepotFormRow = {
-    depotId: "",
-    stockQuantity: "",
-    costPrice: "",
-    salePrice: "",
-    available: true,
-    stockThreshold: "",
-    supplierId: "",
+    depotId: "", stockQuantity: "", costPrice: "",
+    salePrice: "", available: true, stockThreshold: "", supplierId: "",
 };
 
 function normalizeDepotOverview(data: any): SelectOption[] {
@@ -131,61 +116,43 @@ function flattenProducts(data: BackendProductWithDepots[]) {
 
 function formatPrice(value: number) {
     return new Intl.NumberFormat("en-EU", {
-        style: "currency",
-        currency: "EUR",
-        maximumFractionDigits: 0,
+        style: "currency", currency: "EUR", maximumFractionDigits: 0,
     }).format(Number(value ?? 0));
 }
 
 function formatStatusLabel(status: string) {
-    const normalized = (status ?? "").toUpperCase();
-    if (normalized === "ACTIVE") return "Active";
-    if (normalized === "INACTIVE") return "Inactive";
-    if (normalized === "DRAFT") return "Draft";
-    if (normalized === "ARCHIVED") return "Archived";
+    const n = (status ?? "").toUpperCase();
+    if (n === "ACTIVE") return "Active";
+    if (n === "INACTIVE") return "Inactive";
+    if (n === "DRAFT") return "Draft";
+    if (n === "ARCHIVED") return "Archived";
     return status;
 }
 
 function toBackendStatus(status: string) {
-    const normalized = (status ?? "").toUpperCase();
-    if (normalized === "ACTIVE") return "Active";
-    if (normalized === "INACTIVE") return "Inactive";
-    if (normalized === "DRAFT") return "Draft";
-    if (normalized === "ARCHIVED") return "Archived";
+    const n = (status ?? "").toUpperCase();
+    if (n === "ACTIVE") return "Active";
+    if (n === "INACTIVE") return "Inactive";
+    if (n === "DRAFT") return "Draft";
+    if (n === "ARCHIVED") return "Archived";
     return status;
 }
 
 function StatusPill({ status, compact = false }: { status: string; compact?: boolean }) {
-    const normalized = (status ?? "").toLowerCase();
-    let background = "#e8f5ec";
-    let color = "#2e9d5b";
-    let border = "1px solid #b9dec6";
-
-    if (normalized === "inactive" || normalized === "archived") {
-        background = "#f3f4f6";
-        color = "#6b7280";
-        border = "1px solid #d1d5db";
-    }
-
-    if (normalized === "draft") {
-        background = "#fff7e8";
-        color = "#d97706";
-        border = "1px solid #f5d29c";
-    }
-
+    const n = (status ?? "").toLowerCase();
+    const active = n === "active";
+    const draft = n === "draft";
     return (
         <span style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minWidth: compact ? 0 : 88,
-            padding: compact ? "6px 10px" : "8px 14px",
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            minWidth: compact ? 0 : 80,
+            padding: compact ? "4px 10px" : "5px 12px",
             borderRadius: 999,
-            background,
-            color,
-            border,
-            fontSize: compact ? 12 : 14,
-            fontWeight: 700,
+            background: active ? "#e6f7ed" : draft ? "#fffbeb" : "#f3f4f6",
+            color: active ? "#17a84a" : draft ? "#d97706" : "#6b7280",
+            border: `1px solid ${active ? "#b9dec6" : draft ? "#f5d29c" : "#d1d5db"}`,
+            fontSize: compact ? 11 : 12,
+            fontWeight: 600,
             whiteSpace: "nowrap",
         }}>
             {formatStatusLabel(status)}
@@ -196,17 +163,15 @@ function StatusPill({ status, compact = false }: { status: string; compact?: boo
 function AvailabilityPill({ available, compact = false }: { available: boolean; compact?: boolean }) {
     return (
         <span style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minWidth: compact ? 0 : 96,
-            padding: compact ? "6px 10px" : "8px 14px",
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            minWidth: compact ? 0 : 90,
+            padding: compact ? "4px 10px" : "5px 12px",
             borderRadius: 999,
-            background: available ? "#e8f5ec" : "#f3f4f6",
-            color: available ? "#2e9d5b" : "#6b7280",
-            border: available ? "1px solid #b9dec6" : "1px solid #d1d5db",
-            fontSize: compact ? 12 : 14,
-            fontWeight: 700,
+            background: available ? "#e6f7ed" : "#f3f4f6",
+            color: available ? "#17a84a" : "#6b7280",
+            border: `1px solid ${available ? "#b9dec6" : "#d1d5db"}`,
+            fontSize: compact ? 11 : 12,
+            fontWeight: 600,
             whiteSpace: "nowrap",
         }}>
             {available ? "Available" : "Unavailable"}
@@ -217,15 +182,64 @@ function AvailabilityPill({ available, compact = false }: { available: boolean; 
 function MobileDetailRow({ label, value }: { label: string; value: React.ReactNode }) {
     return (
         <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: 12,
-            padding: "10px 0",
-            borderBottom: "1px solid #f1f3f6",
+            display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+            gap: 12, padding: "9px 0", borderBottom: "1px solid #f1f3f6",
         }}>
-            <span style={{ fontSize: 13, color: "#7b8494", fontWeight: 700, flexShrink: 0 }}>{label}</span>
-            <span style={{ fontSize: 14, color: "#273142", fontWeight: 600, textAlign: "right", wordBreak: "break-word" }}>{value}</span>
+            <span style={{ fontSize: 13, color: "#7b8494", fontWeight: 600, flexShrink: 0 }}>{label}</span>
+            <span style={{ fontSize: 13, color: "#273142", fontWeight: 600, textAlign: "right", wordBreak: "break-word" }}>{value}</span>
+        </div>
+    );
+}
+
+function Pagination({ current, total, onChange }: { current: number; total: number; onChange: (p: number) => void }) {
+    if (total <= 1) return null;
+    return (
+        <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "12px 20px", borderTop: "0.5px solid #e0ebe0",
+            background: "#f7f9f7",
+        }}>
+            <span style={{ fontSize: 13, color: "#888", fontWeight: 500 }}>
+                Page {current} of {total}
+            </span>
+            <div style={{ display: "flex", gap: 8 }}>
+                <button
+                    onClick={() => onChange(current - 1)}
+                    disabled={current === 1}
+                    style={{
+                        padding: "6px 14px", borderRadius: 8, border: "0.5px solid #e0ebe0",
+                        background: current === 1 ? "#f7f9f7" : "#fff",
+                        color: current === 1 ? "#bbb" : "#17a84a",
+                        fontWeight: 600, fontSize: 13, cursor: current === 1 ? "default" : "pointer",
+                        fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+                    }}
+                >← Prev</button>
+                {Array.from({ length: total }, (_, i) => i + 1).map((p) => (
+                    <button
+                        key={p}
+                        onClick={() => onChange(p)}
+                        style={{
+                            width: 32, height: 32, borderRadius: 8,
+                            border: p === current ? "none" : "0.5px solid #e0ebe0",
+                            background: p === current ? "#17a84a" : "#fff",
+                            color: p === current ? "#fff" : "#444",
+                            fontWeight: 600, fontSize: 13, cursor: "pointer",
+                            fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+                        }}
+                    >{p}</button>
+                ))}
+                <button
+                    onClick={() => onChange(current + 1)}
+                    disabled={current === total}
+                    style={{
+                        padding: "6px 14px", borderRadius: 8, border: "0.5px solid #e0ebe0",
+                        background: current === total ? "#f7f9f7" : "#fff",
+                        color: current === total ? "#bbb" : "#17a84a",
+                        fontWeight: 600, fontSize: 13, cursor: current === total ? "default" : "pointer",
+                        fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+                    }}
+                >Next →</button>
+            </div>
         </div>
     );
 }
@@ -236,6 +250,7 @@ export default function Products() {
     const [brandFilter, setBrandFilter] = useState("all");
     const [typeFilter, setTypeFilter] = useState("all");
     const [depotFilter, setDepotFilter] = useState("all");
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -258,19 +273,11 @@ export default function Products() {
     });
 
     const [newProduct, setNewProduct] = useState<CreateProductFormData>({
-        sku: "",
-        name: "",
-        description: "",
-        brandId: "",
-        status: "Active",
-        typeId: "",
-        categoryId: "",
-        vehicleTypeId: "",
-        productDepots: [{ ...emptyDepotRow }],
+        sku: "", name: "", description: "", brandId: "", status: "Active",
+        typeId: "", categoryId: "", vehicleTypeId: "", productDepots: [{ ...emptyDepotRow }],
     });
 
     const activeDepotNames = useMemo(() => new Set(depotOptions.map((d) => d.name)), [depotOptions]);
-
     const activeProducts = useMemo(
         () => products.filter((p) => activeDepotNames.has(p.depotName)),
         [products, activeDepotNames]
@@ -293,28 +300,15 @@ export default function Products() {
     const loadOptions = async () => {
         try {
             const [brands, types, categories, depots, suppliers, vehicleTypes] = await Promise.all([
-                getAllBrands(),
-                getAllTypes(),
-                getAllCategories(),
-                getDepotOverview(),
-                getAllSuppliers(),
-                getAllVehicleTypes(),
+                getAllBrands(), getAllTypes(), getAllCategories(),
+                getDepotOverview(), getAllSuppliers(), getAllVehicleTypes(),
             ]);
-
             setBrandOptions((brands ?? []).map((b: any) => ({ id: b.id, name: b.name })));
             setTypeOptions((types ?? []).map((t: any) => ({ id: t.id, name: t.name })));
             setCategoryOptions((categories ?? []).map((c: any) => ({ id: c.id, name: c.name })));
             setDepotOptions(normalizeDepotOverview(depots));
-            setSupplierOptions(
-                (suppliers ?? [])
-                    .filter((s: any) => !s.archived)
-                    .map((s: any) => ({ id: s.id, name: s.name }))
-            );
-            setVehicleTypeOptions(
-                (vehicleTypes ?? [])
-                    .filter((v: any) => !v.archived)
-                    .map((v: any) => ({ id: v.id, name: v.name }))
-            );
+            setSupplierOptions((suppliers ?? []).filter((s: any) => !s.archived).map((s: any) => ({ id: s.id, name: s.name })));
+            setVehicleTypeOptions((vehicleTypes ?? []).filter((v: any) => !v.archived).map((v: any) => ({ id: v.id, name: v.name })));
         } catch (err) {
             console.error("Failed to load select options", err);
         }
@@ -343,58 +337,28 @@ export default function Products() {
         }));
     };
 
-    const handleAddDepot = () => {
-        setNewProduct((prev) => ({
-            ...prev,
-            productDepots: [...prev.productDepots, { ...emptyDepotRow }],
-        }));
-    };
+    const handleAddDepot = () => setNewProduct((prev) => ({ ...prev, productDepots: [...prev.productDepots, { ...emptyDepotRow }] }));
+    const handleRemoveDepot = (index: number) => setNewProduct((prev) => ({ ...prev, productDepots: prev.productDepots.filter((_, i) => i !== index) }));
 
-    const handleRemoveDepot = (index: number) => {
-        setNewProduct((prev) => ({
-            ...prev,
-            productDepots: prev.productDepots.filter((_, i) => i !== index),
-        }));
-    };
-
-    const resetForm = () => {
-        setNewProduct({
-            sku: "",
-            name: "",
-            description: "",
-            brandId: "",
-            status: "Active",
-            typeId: "",
-            categoryId: "",
-            vehicleTypeId: "",
-            productDepots: [{ ...emptyDepotRow }],
-        });
-    };
+    const resetForm = () => setNewProduct({
+        sku: "", name: "", description: "", brandId: "", status: "Active",
+        typeId: "", categoryId: "", vehicleTypeId: "", productDepots: [{ ...emptyDepotRow }],
+    });
 
     const handleCreateProduct = async () => {
         const { sku, name, description, brandId, status, typeId, categoryId, vehicleTypeId, productDepots } = newProduct;
-
         const hasInvalidDepot = productDepots.some(
-            (d) =>
-                d.depotId === "" ||
-                d.stockQuantity === "" ||
-                d.costPrice === "" ||
-                d.salePrice === "" ||
-                d.stockThreshold === "" ||
-                d.supplierId === ""
+            (d) => d.depotId === "" || d.stockQuantity === "" || d.costPrice === "" ||
+                d.salePrice === "" || d.stockThreshold === "" || d.supplierId === ""
         );
-
         if (!sku.trim() || !name.trim() || !description.trim() || brandId === "" || !status ||
             typeId === "" || categoryId === "" || vehicleTypeId === "" || productDepots.length === 0 || hasInvalidDepot) {
             alert("Please fill all required fields including vehicle type, stock threshold and supplier.");
             return;
         }
-
         try {
-            const payload = {
-                sku,
-                name,
-                description,
+            await createProduct({
+                sku, name, description,
                 brandId: Number(brandId),
                 status: toBackendStatus(status),
                 typeId: Number(typeId),
@@ -409,9 +373,7 @@ export default function Products() {
                     stockThreshold: Number(depot.stockThreshold),
                     supplierId: Number(depot.supplierId),
                 })),
-            };
-
-            await createProduct(payload);
+            });
             await loadProducts();
             setShowCreateModal(false);
             resetForm();
@@ -428,7 +390,7 @@ export default function Products() {
 
     const handleSaveEditedProduct = async (updatedProduct: ProductRow, updatedDepots: ProductRow[]) => {
         try {
-            const payload = {
+            await updateProduct(updatedProduct.productId, {
                 name: updatedProduct.name,
                 description: updatedProduct.description,
                 brandId: Number(updatedProduct.brandId),
@@ -445,9 +407,7 @@ export default function Products() {
                     stockThreshold: Number(depot.stockThreshold ?? 10),
                     supplierId: Number(depot.supplierId),
                 })),
-            };
-
-            await updateProduct(updatedProduct.productId, payload);
+            });
             await loadProducts();
             setShowDetailsModal(false);
             setSelectedProduct(null);
@@ -466,49 +426,49 @@ export default function Products() {
                 p.brand.toLowerCase().includes(search.toLowerCase()) ||
                 p.supplierName.toLowerCase().includes(search.toLowerCase()) ||
                 p.vehicleTypeName.toLowerCase().includes(search.toLowerCase());
-
             const matchesCategory = categoryFilter === "all" || String(p.categoryId) === categoryFilter;
             const matchesBrand = brandFilter === "all" || String(p.brandId) === brandFilter;
             const matchesType = typeFilter === "all" || String(p.typeId) === typeFilter;
             const matchesDepot = depotFilter === "all" || p.depotName === depotFilter;
-
             return matchesSearch && matchesCategory && matchesBrand && matchesType && matchesDepot;
         });
     }, [activeProducts, search, categoryFilter, brandFilter, typeFilter, depotFilter]);
 
     const visibleProducts = useMemo(() => {
         const grouped = new Map<number, ProductRow>();
-
         filtered.forEach((product) => {
-            if (!grouped.has(product.productId)) {
-                grouped.set(product.productId, product);
-            }
+            if (!grouped.has(product.productId)) grouped.set(product.productId, product);
         });
-
         return Array.from(grouped.values());
     }, [filtered]);
 
-    const getProductDepotRows = (productId: number) =>
-        activeProducts.filter((product) => product.productId === productId);
+    // Reset to page 1 when filters change
+    useEffect(() => { setCurrentPage(1); }, [search, categoryFilter, brandFilter, typeFilter, depotFilter]);
 
+    const totalPages = Math.ceil(visibleProducts.length / ITEMS_PER_PAGE);
+    const paginatedProducts = visibleProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    const getProductDepotRows = (productId: number) => activeProducts.filter((p) => p.productId === productId);
     const getDepotDisplay = (productId: number) => {
         const depots = getProductDepotRows(productId);
-
         if (depots.length === 0) return "No depots";
         if (depots.length === 1) return depots[0].depotName;
-
         return `${depots.length} depots`;
     };
-
-    const getTotalStock = (productId: number) =>
-        getProductDepotRows(productId).reduce((sum, depot) => sum + depot.stockQuantity, 0);
-
-    const isAvailableInAnyDepot = (productId: number) =>
-        getProductDepotRows(productId).some((depot) => depot.available);
+    const getTotalStock = (productId: number) => getProductDepotRows(productId).reduce((sum, d) => sum + d.stockQuantity, 0);
+    const isAvailableInAnyDepot = (productId: number) => getProductDepotRows(productId).some((d) => d.available);
 
     return (
         <AppLayout>
-            <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 18 : 24 }}>
+            <div style={{
+                fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+                display: "flex",
+                flexDirection: "column",
+                gap: isMobile ? 16 : 20,
+                height: "100%",
+                textAlign: "left",
+            }}>
+                {/* Header */}
                 <div style={{
                     display: "flex",
                     flexDirection: isMobile ? "column" : "row",
@@ -517,123 +477,112 @@ export default function Products() {
                     gap: 16,
                 }}>
                     <div>
-                        <h1 style={{ margin: 0, fontSize: isMobile ? 24 : 28, fontWeight: 800, color: "#1f2937", lineHeight: 1.15 }}>
+                        <h1 style={{ margin: 0, fontSize: isMobile ? 22 : 26, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.5px" }}>
                             Products
                         </h1>
-                        <p style={{ margin: "8px 0 0", color: "#7f8792", fontSize: isMobile ? 14 : 16, lineHeight: 1.5 }}>
+                        <p style={{ margin: "4px 0 0", color: "#888", fontSize: 14, fontWeight: 400 }}>
                             Manage cross-sell products and services
                         </p>
                     </div>
-
                     <button
                         onClick={() => setShowCreateModal(true)}
                         style={{
-                            background: "#2e9d5b",
+                            background: "#17a84a",
                             color: "#fff",
                             border: "none",
-                            borderRadius: 12,
-                            padding: isMobile ? "13px 18px" : "14px 22px",
-                            fontWeight: 700,
-                            fontSize: 16,
+                            borderRadius: 10,
+                            padding: isMobile ? "12px 18px" : "10px 20px",
+                            fontWeight: 600,
+                            fontSize: 14,
                             cursor: "pointer",
-                            boxShadow: "0 4px 12px rgba(46,157,91,0.18)",
                             width: isMobile ? "100%" : "auto",
+                            fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+                            boxShadow: "0 2px 8px rgba(23,168,74,0.2)",
                         }}
                     >
                         + Add Product
                     </button>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 12, flexWrap: "wrap" }}>
+                {/* Filters */}
+                <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 10, flexWrap: "wrap" }}>
                     <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        height: isMobile ? 62 : 50,
-                        borderRadius: 12,
-                        border: "1px solid #d9dee5",
-                        padding: "0 16px",
-                        background: "#fff",
-                        minWidth: isMobile ? "100%" : 260,
+                        display: "flex", alignItems: "center",
+                        height: 42, borderRadius: 10,
+                        border: "0.5px solid #e0ebe0",
+                        padding: "0 14px", background: "#fff",
+                        minWidth: isMobile ? "100%" : 240,
                     }}>
+                        <i className="ti ti-search" style={{ fontSize: 16, color: "#aaa", marginRight: 8 }} aria-hidden="true" />
                         <input
                             placeholder="Search products..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             style={{
-                                border: "none",
-                                outline: "none",
-                                width: "100%",
-                                fontSize: isMobile ? 17 : 15,
-                                background: "transparent",
-                                color: "#2d3340",
+                                border: "none", outline: "none", width: "100%",
+                                fontSize: 14, background: "transparent", color: "#2d3340",
+                                fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
                             }}
                         />
                     </div>
-
-                    <select value={brandFilter} onChange={(e) => setBrandFilter(e.target.value)} style={filterStyle(isMobile)}>
-                        <option value="all">All Brands</option>
-                        {brandOptions.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                    </select>
-
-                    <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} style={filterStyle(isMobile)}>
-                        <option value="all">All Categories</option>
-                        {categoryOptions.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-
-                    <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={filterStyle(isMobile)}>
-                        <option value="all">All Types</option>
-                        {typeOptions.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-
-                    <select value={depotFilter} onChange={(e) => setDepotFilter(e.target.value)} style={filterStyle(isMobile)}>
-                        <option value="all">All Depots</option>
-                        {depotOptions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
-                    </select>
+                    {[
+                        { value: brandFilter, onChange: setBrandFilter, label: "All Brands", options: brandOptions },
+                        { value: categoryFilter, onChange: setCategoryFilter, label: "All Categories", options: categoryOptions },
+                        { value: typeFilter, onChange: setTypeFilter, label: "All Types", options: typeOptions },
+                        { value: depotFilter, onChange: setDepotFilter, label: "All Depots", options: depotOptions },
+                    ].map(({ value, onChange, label, options }) => (
+                        <select
+                            key={label}
+                            value={value}
+                            onChange={(e) => onChange(e.target.value)}
+                            style={filterStyle(isMobile)}
+                        >
+                            <option value="all">{label}</option>
+                            {options.map((o) => <option key={o.id} value={label === "All Depots" ? o.name : o.id}>{o.name}</option>)}
+                        </select>
+                    ))}
                 </div>
 
-                <div style={{ background: "#fff", borderRadius: isMobile ? 16 : 18, border: "1px solid #e6eaef", overflow: "hidden" }}>
+                {/* Table */}
+                <div style={{
+                    background: "#fff", borderRadius: 12,
+                    border: "0.5px solid #e0ebe0", overflow: "hidden",
+                    display: "flex", flexDirection: "column",
+                    alignSelf: "start",
+                }}>
                     {loading ? (
-                        <div style={{ padding: 24, color: "#7f8792" }}>Loading...</div>
+                        <div style={{ padding: 24, color: "#888" }}>Loading...</div>
                     ) : error ? (
                         <div style={{ padding: 24, color: "#d14343" }}>{error}</div>
                     ) : visibleProducts.length === 0 ? (
-                        <div style={{ padding: 24, color: "#7f8792" }}>No products found.</div>
+                        <div style={{ padding: 24, color: "#888" }}>No products found.</div>
                     ) : isMobile ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 12, background: "#f8fafc" }}>
-                            {visibleProducts.map((product) => (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, overflowY: "auto" }}>
+                            {paginatedProducts.map((product) => (
                                 <div
                                     key={product.productId}
                                     onClick={() => handleOpenDetails(product)}
                                     style={{
-                                        border: "1px solid #e9edf2",
-                                        borderRadius: 16,
-                                        padding: 14,
-                                        cursor: "pointer",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: 12,
-                                        background: "#ffffff",
-                                        boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
+                                        border: "0.5px solid #e0ebe0", borderRadius: 12,
+                                        padding: 14, cursor: "pointer",
+                                        display: "flex", flexDirection: "column", gap: 10,
+                                        background: "#fff",
                                     }}
                                 >
                                     <div>
-                                        <div style={{ fontSize: 17, fontWeight: 800, color: "#273142", lineHeight: 1.3 }}>{product.name}</div>
-                                        <div style={{ fontSize: 13, color: "#7b8494", fontWeight: 600, marginTop: 4 }}>SKU: {product.sku}</div>
+                                        <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a" }}>{product.name}</div>
+                                        <div style={{ fontSize: 12, color: "#aaa", fontWeight: 600, marginTop: 3 }}>SKU: {product.sku}</div>
                                     </div>
-
-                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                                         <StatusPill status={product.status} compact />
                                         <AvailabilityPill available={isAvailableInAnyDepot(product.productId)} compact />
                                     </div>
-
-                                    <div style={{ borderTop: "1px solid #f1f3f6", paddingTop: 2 }}>
+                                    <div style={{ borderTop: "0.5px solid #f0f4f0", paddingTop: 2 }}>
                                         <MobileDetailRow label="Brand" value={product.brand} />
                                         <MobileDetailRow label="Category" value={product.category} />
-                                        <MobileDetailRow label="Type" value={product.type} />
                                         <MobileDetailRow label="Vehicle Type" value={product.vehicleTypeName} />
                                         <MobileDetailRow label="Depots" value={getDepotDisplay(product.productId)} />
                                         <MobileDetailRow label="Sale Price" value={formatPrice(product.salePrice)} />
-                                        <MobileDetailRow label="Cost Price" value={formatPrice(product.costPrice)} />
                                         <MobileDetailRow label="Total Stock" value={getTotalStock(product.productId)} />
                                     </div>
                                 </div>
@@ -641,64 +590,39 @@ export default function Products() {
                         </div>
                     ) : (
                         <>
+                            {/* Table header */}
                             <div style={{
                                 display: "grid",
-                                gridTemplateColumns: "1.1fr 2fr 1.4fr 1.3fr 1fr 1fr 1.2fr 1.2fr 1.4fr 1.3fr",
-                                gap: 16,
-                                padding: "20px 22px",
-                                borderBottom: "1px solid #eef1f4",
-                                background: "#fbfcfd",
-                                fontSize: 12,
-                                fontWeight: 800,
-                                color: "#7b8494",
-                                textTransform: "uppercase",
-                                letterSpacing: "0.08em",
+                                gridTemplateColumns: "1fr 2fr 1.2fr 1.2fr 0.8fr 0.8fr 1fr 1fr 1.2fr 1.2fr",
+                                gap: 12, padding: "10px 20px",
+                                borderBottom: "0.5px solid #e0ebe0",
+                                background: "#f7f9f7",
+                                fontSize: 11, fontWeight: 600, color: "#aaa",
+                                textTransform: "uppercase", letterSpacing: "1px",
                                 alignItems: "center",
-                                justifyItems: "center",
                             }}>
-                                <div>SKU</div>
-                                <div>Product</div>
-                                <div>Brand</div>
-                                <div>Category</div>
-                                <div>Sale</div>
-                                <div>Total Stock</div>
-                                <div>Status</div>
-                                <div>Vehicle Type</div>
-                                <div>Depots</div>
-                                <div>Availability</div>
+                                {["SKU","Product","Brand","Category","Sale","Stock","Status","Vehicle Type","Depots","Availability"].map(h => (
+                                    <div key={h}>{h}</div>
+                                ))}
                             </div>
 
-                            {visibleProducts.map((product) => (
-                                <div
-                                    key={product.productId}
-                                    onClick={() => handleOpenDetails(product)}
-                                    style={{
-                                        display: "grid",
-                                        gridTemplateColumns: "1.1fr 2fr 1.4fr 1.3fr 1fr 1fr 1.2fr 1.2fr 1.4fr 1.3fr",
-                                        gap: 16,
-                                        padding: "22px",
-                                        borderBottom: "1px solid #eef1f4",
-                                        cursor: "pointer",
-                                        alignItems: "center",
-                                        justifyItems: "center",
-                                    }}
-                                >
-                                    <div style={{ fontSize: 16, color: "#7b8494", fontWeight: 600 }}>{product.sku}</div>
+                            {/* Table rows */}
+                            <div style={{ overflowY: "auto", flex: 1 }}>
+                                {paginatedProducts.map((product, i) => (
+                                    <TableRow
+                                        key={product.productId}
+                                        product={product}
+                                        isLast={i === paginatedProducts.length - 1}
+                                        depotDisplay={getDepotDisplay(product.productId)}
+                                        totalStock={getTotalStock(product.productId)}
+                                        available={isAvailableInAnyDepot(product.productId)}
+                                        onClick={() => handleOpenDetails(product)}
+                                    />
+                                ))}
+                            </div>
 
-                                    <div style={{ justifySelf: "start", width: "100%" }}>
-                                        <div style={{ fontSize: 18, fontWeight: 700, color: "#273142", lineHeight: 1.35 }}>{product.name}</div>
-                                    </div>
-
-                                    <div style={cellStyle}>{product.brand}</div>
-                                    <div style={cellStyle}>{product.category}</div>
-                                    <div style={{ fontSize: 16, color: "#273142", fontWeight: 600 }}>{formatPrice(product.salePrice)}</div>
-                                    <div style={{ fontSize: 16, color: "#273142", fontWeight: 600 }}>{getTotalStock(product.productId)}</div>
-                                    <div><StatusPill status={product.status} /></div>
-                                    <div style={cellStyle}>{product.vehicleTypeName}</div>
-                                    <div style={cellStyle}>{getDepotDisplay(product.productId)}</div>
-                                    <div><AvailabilityPill available={isAvailableInAnyDepot(product.productId)} /></div>
-                                </div>
-                            ))}
+                            {/* Pagination */}
+                            <Pagination current={currentPage} total={totalPages} onChange={setCurrentPage} />
                         </>
                     )}
                 </div>
@@ -713,10 +637,7 @@ export default function Products() {
                 vehicleTypes={vehicleTypeOptions}
                 depots={depotOptions}
                 suppliers={supplierOptions}
-                onClose={() => {
-                    setShowCreateModal(false);
-                    resetForm();
-                }}
+                onClose={() => { setShowCreateModal(false); resetForm(); }}
                 onChange={handleProductFormChange}
                 onDepotChange={handleDepotChange}
                 onAddDepot={handleAddDepot}
@@ -741,23 +662,63 @@ export default function Products() {
     );
 }
 
+function TableRow({ product, isLast, depotDisplay, totalStock, available, onClick }: {
+    product: ProductRow;
+    isLast: boolean;
+    depotDisplay: string;
+    totalStock: number;
+    available: boolean;
+    onClick: () => void;
+}) {
+    const [hovered, setHovered] = useState(false);
+    return (
+        <div
+            onClick={onClick}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 2fr 1.2fr 1.2fr 0.8fr 0.8fr 1fr 1fr 1.2fr 1.2fr",
+                gap: 12, padding: "20px 20px",
+                borderBottom: isLast ? "none" : "0.5px solid #f0f4f0",
+                alignItems: "center",
+                background: hovered ? "#f8faf8" : "#fff",
+                cursor: "pointer",
+                transition: "background 0.15s",
+            }}
+        >
+            <div style={{ fontSize: 12, color: "#aaa", fontWeight: 600 }}>{product.sku}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>{product.name}</div>
+            <div style={cellStyle}>{product.brand}</div>
+            <div style={cellStyle}>{product.category}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>{new Intl.NumberFormat("en-EU", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(product.salePrice)}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>{totalStock}</div>
+            <div><StatusPill status={product.status} /></div>
+            <div style={cellStyle}>{product.vehicleTypeName}</div>
+            <div style={cellStyle}>{depotDisplay}</div>
+            <div><AvailabilityPill available={available} /></div>
+        </div>
+    );
+}
+
 function filterStyle(isMobile: boolean): React.CSSProperties {
     return {
-        width: isMobile ? "100%" : 210,
-        height: 50,
-        borderRadius: 12,
-        border: "1px solid #d9dee5",
-        padding: "0 16px",
-        fontSize: 15,
+        width: isMobile ? "100%" : 180,
+        height: 42,
+        borderRadius: 10,
+        border: "0.5px solid #e0ebe0",
+        padding: "0 14px",
+        fontSize: 13,
         background: "#fff",
         color: "#2d3340",
         outline: "none",
         boxSizing: "border-box",
+        fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
     };
 }
 
 const cellStyle: React.CSSProperties = {
-    fontSize: 15,
-    color: "#6b7280",
+    fontSize: 13,
+    color: "#888",
     fontWeight: 500,
 };

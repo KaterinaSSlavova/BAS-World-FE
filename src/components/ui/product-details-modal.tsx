@@ -15,6 +15,10 @@ interface ProductDetailsModalProps {
     supplierOptions: SelectOption[];
 }
 
+const FONT = "'Plus Jakarta Sans', system-ui, sans-serif";
+const BRAND = "#17a84a";
+const BORDER = "0.5px solid #e0ebe0";
+
 const overlayStyle: CSSProperties = {
     position: "fixed",
     inset: 0,
@@ -30,87 +34,90 @@ const modalStyle: CSSProperties = {
     width: "100%",
     maxWidth: 900,
     maxHeight: "90vh",
-    background: "#ffffff",
-    borderRadius: 18,
-    boxShadow: "0 24px 60px rgba(0,0,0,0.22)",
-    border: "1px solid #d9e2d9",
+    background: "#fff",
+    borderRadius: 16,
+    boxShadow: "0 24px 60px rgba(0,0,0,0.15)",
+    border: BORDER,
     overflow: "hidden",
     display: "flex",
     flexDirection: "column",
-    color: "#111827",
+    fontFamily: FONT,
+    color: "#1a1a1a",
 };
 
-const sectionStyle: CSSProperties = { padding: 18 };
-
 const labelStyle: CSSProperties = {
-    fontSize: 13,
-    fontWeight: 800,
-    color: "#1f2937",
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#888",
     marginBottom: 6,
+    letterSpacing: "0.5px",
+    fontFamily: FONT,
 };
 
 const inputStyle: CSSProperties = {
     width: "100%",
     height: 40,
-    border: "1px solid #cfd8cf",
+    border: BORDER,
     borderRadius: 10,
     padding: "0 12px",
     fontSize: 14,
-    color: "#111827",
-    background: "#ffffff",
+    color: "#1a1a1a",
+    background: "#fff",
     boxSizing: "border-box",
     outline: "none",
-    fontFamily: "inherit",
+    fontFamily: FONT,
 };
 
 const readOnlyStyle: CSSProperties = {
     ...inputStyle,
-    background: "#f9fafb",
-    color: "#374151",
+    background: "#f7f9f7",
+    color: "#888",
 };
 
 const textareaStyle: CSSProperties = {
     width: "100%",
     minHeight: 58,
     maxHeight: 84,
-    border: "1px solid #cfd8cf",
+    border: BORDER,
     borderRadius: 10,
     padding: "10px 12px",
     fontSize: 14,
-    color: "#111827",
-    background: "#ffffff",
+    color: "#1a1a1a",
+    background: "#fff",
     boxSizing: "border-box",
     outline: "none",
-    fontFamily: "inherit",
+    fontFamily: FONT,
     resize: "vertical",
 };
 
 const readOnlyTextareaStyle: CSSProperties = {
     ...textareaStyle,
-    background: "#f9fafb",
-    color: "#374151",
+    background: "#f7f9f7",
+    color: "#888",
 };
 
 const secondaryButtonStyle: CSSProperties = {
-    padding: "10px 14px",
+    padding: "9px 14px",
     borderRadius: 10,
-    border: "1px solid #d1d5db",
-    background: "#ffffff",
-    color: "#111827",
+    border: BORDER,
+    background: "#fff",
+    color: "#1a1a1a",
     fontSize: 14,
-    fontWeight: 800,
+    fontWeight: 600,
     cursor: "pointer",
+    fontFamily: FONT,
 };
 
 const primaryButtonStyle: CSSProperties = {
-    padding: "10px 16px",
+    padding: "9px 16px",
     borderRadius: 10,
     border: "none",
-    background: "#15803d",
-    color: "#ffffff",
+    background: BRAND,
+    color: "#fff",
     fontSize: 14,
-    fontWeight: 800,
+    fontWeight: 600,
     cursor: "pointer",
+    fontFamily: FONT,
 };
 
 const disabledButtonStyle: CSSProperties = {
@@ -121,16 +128,9 @@ const disabledButtonStyle: CSSProperties = {
 };
 
 export default function ProductDetailsModal({
-                                                open,
-                                                product,
-                                                allProducts,
-                                                onClose,
-                                                onSave,
-                                                brandOptions,
-                                                typeOptions,
-                                                categoryOptions,
-                                                vehicleTypeOptions,
-                                                supplierOptions,
+                                                open, product, allProducts, onClose, onSave,
+                                                brandOptions, typeOptions, categoryOptions,
+                                                vehicleTypeOptions, supplierOptions,
                                             }: ProductDetailsModalProps) {
     const productDepotRows = useMemo(() => {
         if (!product) return [];
@@ -153,77 +153,41 @@ export default function ProductDetailsModal({
 
     if (!open || !product || !productForm) return null;
 
-    const handleProductChange = <K extends keyof ProductRow>(
-        field: K,
-        value: ProductRow[K]
-    ) => {
+    const handleProductChange = <K extends keyof ProductRow>(field: K, value: ProductRow[K]) => {
         setProductForm((prev) => (prev ? { ...prev, [field]: value } : prev));
     };
 
-    const handleDepotChange = <K extends keyof ProductRow>(
-        depotId: number,
-        field: K,
-        value: ProductRow[K]
-    ) => {
-        setDepotForms((prev) =>
-            prev.map((row) =>
-                row.depotId === depotId ? { ...row, [field]: value } : row
-            )
-        );
+    const handleDepotChange = <K extends keyof ProductRow>(depotId: number, field: K, value: ProductRow[K]) => {
+        setDepotForms((prev) => prev.map((row) => row.depotId === depotId ? { ...row, [field]: value } : row));
     };
 
     const handleSupplierChange = (depotId: number, supplierId: number) => {
-        const selected = supplierOptions.find((option) => option.id === supplierId);
-
-        setDepotForms((prev) =>
-            prev.map((row) =>
-                row.depotId === depotId
-                    ? {
-                        ...row,
-                        supplierId,
-                        supplierName: selected?.name ?? "Unknown",
-                    }
-                    : row
-            )
-        );
+        const selected = supplierOptions.find((o) => o.id === supplierId);
+        setDepotForms((prev) => prev.map((row) => row.depotId === depotId ? { ...row, supplierId, supplierName: selected?.name ?? "Unknown" } : row));
     };
 
     const handleBrandChange = (newBrandId: number) => {
-        const selected = brandOptions.find((option) => option.id === newBrandId);
+        const selected = brandOptions.find((o) => o.id === newBrandId);
         if (!selected) return;
-        setProductForm((prev) =>
-            prev ? { ...prev, brandId: selected.id, brand: selected.name } : prev
-        );
+        setProductForm((prev) => prev ? { ...prev, brandId: selected.id, brand: selected.name } : prev);
     };
 
     const handleTypeChange = (newTypeId: number) => {
-        const selected = typeOptions.find((option) => option.id === newTypeId);
+        const selected = typeOptions.find((o) => o.id === newTypeId);
         if (!selected) return;
-        setProductForm((prev) =>
-            prev ? { ...prev, typeId: selected.id, type: selected.name } : prev
-        );
+        setProductForm((prev) => prev ? { ...prev, typeId: selected.id, type: selected.name } : prev);
     };
 
     const handleCategoryChange = (newCategoryId: number) => {
-        const selected = categoryOptions.find((option) => option.id === newCategoryId);
+        const selected = categoryOptions.find((o) => o.id === newCategoryId);
         if (!selected) return;
-        setProductForm((prev) =>
-            prev ? { ...prev, categoryId: selected.id, category: selected.name } : prev
-        );
+        setProductForm((prev) => prev ? { ...prev, categoryId: selected.id, category: selected.name } : prev);
     };
 
     const handleVehicleTypeChange = (newVehicleTypeId: number) => {
-        const selected = vehicleTypeOptions.find((option) => option.id === newVehicleTypeId);
+        const selected = vehicleTypeOptions.find((o) => o.id === newVehicleTypeId);
         if (!selected) return;
-        setProductForm((prev) =>
-            prev
-                ? {
-                    ...prev,
-                    vehicleTypeId: selected.id,
-                    vehicleTypeName: selected.name,
-                }
-                : prev
-        );
+        setProductForm((prev) => prev ? { ...prev, vehicleTypeId: selected.id, vehicleTypeName: selected.name } : prev);
     };
 
     const handleCancelProductEdit = () => {
@@ -234,11 +198,7 @@ export default function ProductDetailsModal({
     const handleCancelDepotEdit = (depotId: number) => {
         const originalRow = productDepotRows.find((row) => row.depotId === depotId);
         if (!originalRow) return;
-
-        setDepotForms((prev) =>
-            prev.map((row) => (row.depotId === depotId ? originalRow : row))
-        );
-
+        setDepotForms((prev) => prev.map((row) => row.depotId === depotId ? originalRow : row));
         setEditingDepotId(null);
     };
 
@@ -257,71 +217,35 @@ export default function ProductDetailsModal({
     return (
         <div onClick={onClose} style={overlayStyle}>
             <div onClick={(e) => e.stopPropagation()} style={modalStyle}>
-                <div
-                    style={{
-                        ...sectionStyle,
-                        borderBottom: "1px solid #edf1ed",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        gap: 16,
-                    }}
-                >
+
+                {/* Header */}
+                <div style={{ padding: "18px 20px", borderBottom: BORDER, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#111827" }}>
+                        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#1a1a1a" }}>
                             {productForm.name || "Product Details"}
                         </h2>
-                        <p style={{ margin: "6px 0 0", fontSize: 14, color: "#4b5563", fontWeight: 500 }}>
+                        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#888", fontWeight: 400 }}>
                             Edit product details and depot-specific availability.
                         </p>
                     </div>
-
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        style={{ ...secondaryButtonStyle, width: 36, height: 36, padding: 0, fontSize: 18 }}
-                    >
-                        ×
-                    </button>
+                    <button type="button" onClick={onClose} style={{ ...secondaryButtonStyle, width: 34, height: 34, padding: 0, fontSize: 18 }}>×</button>
                 </div>
 
-                <div style={{ ...sectionStyle, overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
-                    <div style={{ border: "1px solid #e5ebe5", borderRadius: 14, padding: 14, background: "#ffffff" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 12 }}>
-                            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: "#111827" }}>
-                                Product Information
-                            </h3>
+                {/* Body */}
+                <div style={{ padding: 18, overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
 
+                    {/* Product Information */}
+                    <div style={{ border: BORDER, borderRadius: 12, padding: 16, background: "#fff" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 12 }}>
+                            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>Product Information</h3>
                             {!isProductEditing ? (
-                                <button
-                                    type="button"
-                                    onClick={() => setIsProductEditing(true)}
-                                    disabled={isSaving}
-                                    style={isSaving ? disabledButtonStyle : secondaryButtonStyle}
-                                >
+                                <button type="button" onClick={() => setIsProductEditing(true)} disabled={isSaving} style={isSaving ? disabledButtonStyle : secondaryButtonStyle}>
                                     Edit Product
                                 </button>
                             ) : (
                                 <div style={{ display: "flex", gap: 8 }}>
-                                    <button
-                                        type="button"
-                                        onClick={handleCancelProductEdit}
-                                        disabled={isSaving}
-                                        style={isSaving ? disabledButtonStyle : secondaryButtonStyle}
-                                    >
-                                        Cancel
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={handleSave}
-                                        disabled={isSaving}
-                                        style={{
-                                            ...primaryButtonStyle,
-                                            background: isSaving ? "#9ca3af" : "#15803d",
-                                            cursor: isSaving ? "not-allowed" : "pointer",
-                                        }}
-                                    >
+                                    <button type="button" onClick={handleCancelProductEdit} disabled={isSaving} style={isSaving ? disabledButtonStyle : secondaryButtonStyle}>Cancel</button>
+                                    <button type="button" onClick={handleSave} disabled={isSaving} style={{ ...primaryButtonStyle, background: isSaving ? "#9ca3af" : BRAND, cursor: isSaving ? "not-allowed" : "pointer" }}>
                                         {isSaving ? "Saving..." : "Save Product"}
                                     </button>
                                 </div>
@@ -333,180 +257,89 @@ export default function ProductDetailsModal({
                                 <label style={labelStyle}>SKU</label>
                                 <input value={productForm.sku} readOnly style={readOnlyStyle} />
                             </div>
-
                             <div style={{ display: "flex", flexDirection: "column" }}>
                                 <label style={labelStyle}>Product Name</label>
-                                <input
-                                    value={productForm.name}
-                                    readOnly={!isProductEditing}
-                                    onChange={(e) => handleProductChange("name", e.target.value)}
-                                    style={isProductEditing ? inputStyle : readOnlyStyle}
-                                />
+                                <input value={productForm.name} readOnly={!isProductEditing} onChange={(e) => handleProductChange("name", e.target.value)} style={isProductEditing ? inputStyle : readOnlyStyle} />
                             </div>
-
                             <div style={{ display: "flex", flexDirection: "column" }}>
                                 <label style={labelStyle}>Brand</label>
                                 {isProductEditing ? (
-                                    <select
-                                        value={productForm.brandId}
-                                        onChange={(e) => handleBrandChange(Number(e.target.value))}
-                                        style={inputStyle}
-                                    >
-                                        {brandOptions.map((option) => (
-                                            <option key={option.id} value={option.id}>
-                                                {option.name}
-                                            </option>
-                                        ))}
+                                    <select value={productForm.brandId} onChange={(e) => handleBrandChange(Number(e.target.value))} style={inputStyle}>
+                                        {brandOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                                     </select>
                                 ) : (
                                     <input value={productForm.brand} readOnly style={readOnlyStyle} />
                                 )}
                             </div>
-
                             <div style={{ display: "flex", flexDirection: "column" }}>
                                 <label style={labelStyle}>Category</label>
                                 {isProductEditing ? (
-                                    <select
-                                        value={productForm.categoryId}
-                                        onChange={(e) => handleCategoryChange(Number(e.target.value))}
-                                        style={inputStyle}
-                                    >
-                                        {categoryOptions.map((option) => (
-                                            <option key={option.id} value={option.id}>
-                                                {option.name}
-                                            </option>
-                                        ))}
+                                    <select value={productForm.categoryId} onChange={(e) => handleCategoryChange(Number(e.target.value))} style={inputStyle}>
+                                        {categoryOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                                     </select>
                                 ) : (
                                     <input value={productForm.category} readOnly style={readOnlyStyle} />
                                 )}
                             </div>
-
                             <div style={{ display: "flex", flexDirection: "column" }}>
                                 <label style={labelStyle}>Type</label>
                                 {isProductEditing ? (
-                                    <select
-                                        value={productForm.typeId}
-                                        onChange={(e) => handleTypeChange(Number(e.target.value))}
-                                        style={inputStyle}
-                                    >
-                                        {typeOptions.map((option) => (
-                                            <option key={option.id} value={option.id}>
-                                                {option.name}
-                                            </option>
-                                        ))}
+                                    <select value={productForm.typeId} onChange={(e) => handleTypeChange(Number(e.target.value))} style={inputStyle}>
+                                        {typeOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                                     </select>
                                 ) : (
                                     <input value={productForm.type} readOnly style={readOnlyStyle} />
                                 )}
                             </div>
-
                             <div style={{ display: "flex", flexDirection: "column" }}>
                                 <label style={labelStyle}>Vehicle Type</label>
                                 {isProductEditing ? (
-                                    <select
-                                        value={productForm.vehicleTypeId}
-                                        onChange={(e) => handleVehicleTypeChange(Number(e.target.value))}
-                                        style={inputStyle}
-                                    >
-                                        {vehicleTypeOptions.map((option) => (
-                                            <option key={option.id} value={option.id}>
-                                                {option.name}
-                                            </option>
-                                        ))}
+                                    <select value={productForm.vehicleTypeId} onChange={(e) => handleVehicleTypeChange(Number(e.target.value))} style={inputStyle}>
+                                        {vehicleTypeOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                                     </select>
                                 ) : (
                                     <input value={productForm.vehicleTypeName} readOnly style={readOnlyStyle} />
                                 )}
                             </div>
-
                             <div style={{ display: "flex", flexDirection: "column" }}>
                                 <label style={labelStyle}>Status</label>
-                                <select
-                                    value={productForm.status}
-                                    disabled={!isProductEditing}
-                                    onChange={(e) => handleProductChange("status", e.target.value)}
-                                    style={isProductEditing ? inputStyle : readOnlyStyle}
-                                >
+                                <select value={productForm.status} disabled={!isProductEditing} onChange={(e) => handleProductChange("status", e.target.value)} style={isProductEditing ? inputStyle : readOnlyStyle}>
                                     <option value="ACTIVE">Active</option>
                                     <option value="INACTIVE">Inactive</option>
                                     <option value="DRAFT">Draft</option>
                                     <option value="ARCHIVED">Archived</option>
                                 </select>
                             </div>
-
                             <div style={{ display: "flex", flexDirection: "column", gridColumn: "1 / -1" }}>
                                 <label style={labelStyle}>Description</label>
-                                <textarea
-                                    value={productForm.description}
-                                    readOnly={!isProductEditing}
-                                    onChange={(e) => handleProductChange("description", e.target.value)}
-                                    style={isProductEditing ? textareaStyle : readOnlyTextareaStyle}
-                                />
+                                <textarea value={productForm.description} readOnly={!isProductEditing} onChange={(e) => handleProductChange("description", e.target.value)} style={isProductEditing ? textareaStyle : readOnlyTextareaStyle} />
                             </div>
                         </div>
                     </div>
 
-                    <div style={{ border: "2px solid #b9dec6", borderRadius: 16, padding: 16, background: "#fbfffc" }}>
+                    {/* Depot Details */}
+                    <div style={{ border: BORDER, borderRadius: 12, padding: 16, background: "#f7f9f7" }}>
                         <div style={{ marginBottom: 14 }}>
-                            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: "#111827" }}>
-                                Depot Details
-                            </h3>
-                            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#4b5563", fontWeight: 500 }}>
+                            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>Depot Details</h3>
+                            <p style={{ margin: "3px 0 0", fontSize: 12, color: "#888" }}>
                                 Manage stock, pricing, threshold, supplier and availability for each depot.
                             </p>
                         </div>
 
                         {depotForms.map((depotRow) => {
                             const isDepotEditing = editingDepotId === depotRow.depotId;
-
                             return (
-                                <div
-                                    key={depotRow.depotId}
-                                    style={{
-                                        border: "1px solid #d9e2d9",
-                                        borderRadius: 14,
-                                        padding: 14,
-                                        marginBottom: 12,
-                                        background: "#ffffff",
-                                        boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
-                                    }}
-                                >
+                                <div key={depotRow.depotId} style={{ border: BORDER, borderRadius: 10, padding: 14, marginBottom: 10, background: "#fff" }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                                        <h4 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: "#111827" }}>
-                                            {depotRow.depotName}
-                                        </h4>
-
+                                        <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>{depotRow.depotName}</span>
                                         {!isDepotEditing ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditingDepotId(depotRow.depotId)}
-                                                disabled={isSaving || editingDepotId !== null}
-                                                style={isSaving || editingDepotId !== null ? disabledButtonStyle : secondaryButtonStyle}
-                                            >
+                                            <button type="button" onClick={() => setEditingDepotId(depotRow.depotId)} disabled={isSaving || editingDepotId !== null} style={isSaving || editingDepotId !== null ? disabledButtonStyle : secondaryButtonStyle}>
                                                 Edit Depot
                                             </button>
                                         ) : (
                                             <div style={{ display: "flex", gap: 8 }}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleCancelDepotEdit(depotRow.depotId)}
-                                                    disabled={isSaving}
-                                                    style={isSaving ? disabledButtonStyle : secondaryButtonStyle}
-                                                >
-                                                    Cancel
-                                                </button>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={handleSave}
-                                                    disabled={isSaving}
-                                                    style={{
-                                                        ...primaryButtonStyle,
-                                                        background: isSaving ? "#9ca3af" : "#15803d",
-                                                        cursor: isSaving ? "not-allowed" : "pointer",
-                                                    }}
-                                                >
+                                                <button type="button" onClick={() => handleCancelDepotEdit(depotRow.depotId)} disabled={isSaving} style={isSaving ? disabledButtonStyle : secondaryButtonStyle}>Cancel</button>
+                                                <button type="button" onClick={handleSave} disabled={isSaving} style={{ ...primaryButtonStyle, background: isSaving ? "#9ca3af" : BRAND, cursor: isSaving ? "not-allowed" : "pointer" }}>
                                                     {isSaving ? "Saving..." : "Save"}
                                                 </button>
                                             </div>
@@ -518,82 +351,31 @@ export default function ProductDetailsModal({
                                             <label style={labelStyle}>Depot</label>
                                             <input value={depotRow.depotName} readOnly style={readOnlyStyle} />
                                         </div>
-
                                         <div style={{ display: "flex", flexDirection: "column" }}>
                                             <label style={labelStyle}>Stock</label>
-                                            <input
-                                                type="number"
-                                                value={depotRow.stockQuantity}
-                                                readOnly={!isDepotEditing}
-                                                onChange={(e) =>
-                                                    handleDepotChange(depotRow.depotId, "stockQuantity", Number(e.target.value))
-                                                }
-                                                style={isDepotEditing ? inputStyle : readOnlyStyle}
-                                            />
+                                            <input type="number" value={depotRow.stockQuantity} readOnly={!isDepotEditing} onChange={(e) => handleDepotChange(depotRow.depotId, "stockQuantity", Number(e.target.value))} style={isDepotEditing ? inputStyle : readOnlyStyle} />
                                         </div>
-
                                         <div style={{ display: "flex", flexDirection: "column" }}>
                                             <label style={labelStyle}>Cost Price</label>
-                                            <input
-                                                type="number"
-                                                value={depotRow.costPrice}
-                                                readOnly={!isDepotEditing}
-                                                onChange={(e) =>
-                                                    handleDepotChange(depotRow.depotId, "costPrice", Number(e.target.value))
-                                                }
-                                                style={isDepotEditing ? inputStyle : readOnlyStyle}
-                                            />
+                                            <input type="number" value={depotRow.costPrice} readOnly={!isDepotEditing} onChange={(e) => handleDepotChange(depotRow.depotId, "costPrice", Number(e.target.value))} style={isDepotEditing ? inputStyle : readOnlyStyle} />
                                         </div>
-
                                         <div style={{ display: "flex", flexDirection: "column" }}>
                                             <label style={labelStyle}>Sale Price</label>
-                                            <input
-                                                type="number"
-                                                value={depotRow.salePrice}
-                                                readOnly={!isDepotEditing}
-                                                onChange={(e) =>
-                                                    handleDepotChange(depotRow.depotId, "salePrice", Number(e.target.value))
-                                                }
-                                                style={isDepotEditing ? inputStyle : readOnlyStyle}
-                                            />
+                                            <input type="number" value={depotRow.salePrice} readOnly={!isDepotEditing} onChange={(e) => handleDepotChange(depotRow.depotId, "salePrice", Number(e.target.value))} style={isDepotEditing ? inputStyle : readOnlyStyle} />
                                         </div>
-
                                         <div style={{ display: "flex", flexDirection: "column" }}>
                                             <label style={labelStyle}>Stock Threshold</label>
-                                            <input
-                                                type="number"
-                                                value={depotRow.stockThreshold}
-                                                readOnly={!isDepotEditing}
-                                                onChange={(e) =>
-                                                    handleDepotChange(depotRow.depotId, "stockThreshold", Number(e.target.value))
-                                                }
-                                                style={isDepotEditing ? inputStyle : readOnlyStyle}
-                                            />
+                                            <input type="number" value={depotRow.stockThreshold} readOnly={!isDepotEditing} onChange={(e) => handleDepotChange(depotRow.depotId, "stockThreshold", Number(e.target.value))} style={isDepotEditing ? inputStyle : readOnlyStyle} />
                                         </div>
-
                                         <div style={{ display: "flex", flexDirection: "column" }}>
                                             <label style={labelStyle}>Supplier</label>
                                             {isDepotEditing ? (
-                                                <select
-                                                    value={depotRow.supplierId}
-                                                    onChange={(e) =>
-                                                        handleSupplierChange(depotRow.depotId, Number(e.target.value))
-                                                    }
-                                                    style={inputStyle}
-                                                >
+                                                <select value={depotRow.supplierId} onChange={(e) => handleSupplierChange(depotRow.depotId, Number(e.target.value))} style={inputStyle}>
                                                     <option value={0}>Select supplier</option>
-                                                    {supplierOptions.map((option) => (
-                                                        <option key={option.id} value={option.id}>
-                                                            {option.name}
-                                                        </option>
-                                                    ))}
+                                                    {supplierOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                                                 </select>
                                             ) : (
-                                                <input
-                                                    value={depotRow.supplierName || "Unknown"}
-                                                    readOnly
-                                                    style={readOnlyStyle}
-                                                />
+                                                <input value={depotRow.supplierName || "Unknown"} readOnly style={readOnlyStyle} />
                                             )}
                                         </div>
                                     </div>
@@ -603,13 +385,9 @@ export default function ProductDetailsModal({
                     </div>
                 </div>
 
-                <div style={{ padding: "14px 18px", borderTop: "1px solid #edf1ed", display: "flex", justifyContent: "flex-end", gap: 12, background: "#ffffff" }}>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={isSaving}
-                        style={isSaving ? disabledButtonStyle : secondaryButtonStyle}
-                    >
+                {/* Footer */}
+                <div style={{ padding: "14px 20px", borderTop: BORDER, display: "flex", justifyContent: "flex-end", gap: 10, background: "#fff" }}>
+                    <button type="button" onClick={onClose} disabled={isSaving} style={isSaving ? disabledButtonStyle : secondaryButtonStyle}>
                         Close
                     </button>
                 </div>
