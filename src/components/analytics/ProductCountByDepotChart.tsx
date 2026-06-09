@@ -1,38 +1,48 @@
 import {
-    Cell,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
+    Chart as ChartJS,
+    ArcElement,
     Tooltip,
     Legend,
-} from "recharts";
+} from "chart.js";
+import { Doughnut } from "react-chartjs-2";
 import type { ProductCountByDepot } from "../../lib/api/analytics";
+
+ChartJS.register(
+    ArcElement,
+    Tooltip,
+    Legend
+);
 
 type Props = {
     data: ProductCountByDepot[];
 };
 
-const COLORS = ["#239b66", "#6b7280", "#ef4444", "#10b981", "#9ca3af"];
-
 export default function ProductCountByDepotChart({ data }: Props) {
-    return (
-        <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-                <Pie
-                    data={data}
-                    dataKey="totalValue"
-                    nameKey="depotName"
-                    innerRadius={65}
-                    outerRadius={100}
-                    paddingAngle={4}
-                >
-                    {data.map((_, index) => (
-                        <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-            </PieChart>
-        </ResponsiveContainer>
-    );
+    const chartData = {
+        labels: data.map((item) => item.depotName),
+        datasets: [
+            {
+                data: data.map((item) => item.totalValue),
+                backgroundColor: [
+                    "#239b66",
+                    "#6b7280",
+                    "#ef4444",
+                    "#10b981",
+                    "#9ca3af",
+                ],
+                borderWidth: 1,
+            },
+        ],
+    };
+
+    const options = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: "bottom" as const,
+            },
+        },
+    };
+
+    return <Doughnut data={chartData} options={options} />;
 }

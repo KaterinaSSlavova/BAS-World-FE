@@ -8,6 +8,7 @@ import Brands from "./pages/Brands.jsx";
 import Depots from "./pages/Depots.jsx";
 import Configuration from "./pages/Configuration.jsx";
 import StockAlerts from "./pages/StockAlerts.jsx";
+import Analytics from "./pages/Analytics.jsx";
 
 function LandingPage() {
     return (
@@ -53,6 +54,7 @@ function App() {
                 <Route path="/configuration" element={<Configuration />} />
                 <Route path="/stock-alerts" element={<StockAlerts />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="/analytics" element={<Analytics />} />
             </Routes>
         </BrowserRouter>
     );

@@ -1,28 +1,47 @@
 import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    ResponsiveContainer,
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
     Tooltip,
-    XAxis,
-    YAxis,
-} from "recharts";
-import type { StockValueByCategory } from "../../lib/api/analytics"
+    Legend,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
+import type { StockValueByCategory } from "../../lib/api/analytics";
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Tooltip,
+    Legend
+);
 
 type Props = {
     data: StockValueByCategory[];
 };
 
 export default function StockValueByCategoryChart({ data }: Props) {
-    return (
-        <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="categoryName" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="totalValue" fill="#239b66" radius={[6, 6, 0, 0]} />
-            </BarChart>
-        </ResponsiveContainer>
-    );
+    const chartData = {
+        labels: data.map((item) => item.categoryName),
+        datasets: [
+            {
+                label: "Stock Value",
+                data: data.map((item) => item.totalValue),
+                backgroundColor: "#239b66",
+                borderRadius: 8,
+            },
+        ],
+    };
+
+    const options = {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false,
+            },
+        },
+    };
+
+    return <Bar data={chartData} options={options} />;
 }
