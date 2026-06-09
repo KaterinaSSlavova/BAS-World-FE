@@ -3,18 +3,21 @@ import { createBrand, updateBrand, archiveBrand } from "../lib/api/brands";
 import { uploadBrandPicture } from "../lib/uploadBrandPicture";
 import { ConfirmArchiveModal } from "./ConfigurationShared.jsx";
 
-const PER_PAGE = 8;
+const BRAND = "#17a84a";
+const FONT = "'Plus Jakarta Sans', system-ui, sans-serif";
+const BORDER = "0.5px solid #e0ebe0";
+const PER_PAGE = 9;
 
 function Pagination({ total, page, onPage }) {
     const totalPages = Math.ceil(total / PER_PAGE);
     if (totalPages <= 1) return null;
     return (
         <div style={{ display: "flex", gap: 6, justifyContent: "center", alignItems: "center", marginTop: 8 }}>
-            <button onClick={() => onPage(page - 1)} disabled={page === 0} style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid #d9dee5", background: "#fff", fontWeight: 700, fontSize: 14, color: page === 0 ? "#c4c9d2" : "#374151", cursor: page === 0 ? "default" : "pointer" }}>&#8249;</button>
+            <button onClick={() => onPage(page - 1)} disabled={page === 0} style={{ padding: "6px 12px", borderRadius: 8, border: BORDER, background: page === 0 ? "#f7f9f7" : "#fff", fontWeight: 600, fontSize: 13, color: page === 0 ? "#ccc" : BRAND, cursor: page === 0 ? "default" : "pointer", fontFamily: FONT }}>← Prev</button>
             {Array.from({ length: totalPages }, (_, i) => (
-                <button key={i} onClick={() => onPage(i)} style={{ padding: "8px 14px", borderRadius: 9, border: i === page ? "1px solid #2e9d5b" : "1px solid #d9dee5", background: i === page ? "#2e9d5b" : "#fff", fontWeight: 700, fontSize: 14, color: i === page ? "#fff" : "#374151", cursor: "pointer" }}>{i + 1}</button>
+                <button key={i} onClick={() => onPage(i)} style={{ width: 32, height: 32, borderRadius: 8, border: i === page ? "none" : BORDER, background: i === page ? BRAND : "#fff", fontWeight: 600, fontSize: 13, color: i === page ? "#fff" : "#444", cursor: "pointer", fontFamily: FONT }}>{i + 1}</button>
             ))}
-            <button onClick={() => onPage(page + 1)} disabled={page === totalPages - 1} style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid #d9dee5", background: "#fff", fontWeight: 700, fontSize: 14, color: page === totalPages - 1 ? "#c4c9d2" : "#374151", cursor: page === totalPages - 1 ? "default" : "pointer" }}>&#8250;</button>
+            <button onClick={() => onPage(page + 1)} disabled={page === totalPages - 1} style={{ padding: "6px 12px", borderRadius: 8, border: BORDER, background: page === totalPages - 1 ? "#f7f9f7" : "#fff", fontWeight: 600, fontSize: 13, color: page === totalPages - 1 ? "#ccc" : BRAND, cursor: page === totalPages - 1 ? "default" : "pointer", fontFamily: FONT }}>Next →</button>
         </div>
     );
 }
@@ -38,20 +41,20 @@ function BrandModal({ open, mode, brand, onSubmit, onClose }) {
 
     return (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={onClose}>
-            <div style={{ background: "#fff", borderRadius: 18, padding: "32px 28px", width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(15,23,42,0.18)" }} onClick={(e) => e.stopPropagation()}>
-                <h2 style={{ margin: "0 0 24px", fontSize: 22, fontWeight: 800, color: "#1f2937" }}>{mode === "edit" ? "Edit Brand" : "Add Brand"}</h2>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
-                    <div style={{ width: 96, height: 96, borderRadius: 16, border: "2px dashed #d9dee5", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                        {pictureUrl ? <img src={pictureUrl} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.style.display = "none"; }} /> : <span style={{ fontSize: 32 }}>🏷️</span>}
+            <div style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", width: "100%", maxWidth: 460, boxShadow: "0 24px 60px rgba(0,0,0,0.15)", border: BORDER, fontFamily: FONT }} onClick={(e) => e.stopPropagation()}>
+                <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: "#1a1a1a" }}>{mode === "edit" ? "Edit Brand" : "Add Brand"}</h2>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+                    <div style={{ width: 80, height: 80, borderRadius: 12, border: BORDER, background: "#f7f9f7", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                        {pictureUrl ? <img src={pictureUrl} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.style.display = "none"; }} /> : <span style={{ fontSize: 28 }}>🏷️</span>}
                     </div>
                 </div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#7b8494", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Name</label>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#888", letterSpacing: "0.5px", marginBottom: 6 }}>NAME</label>
                 <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter brand name..."
-                       style={{ width: "100%", boxSizing: "border-box", padding: "13px 16px", borderRadius: 12, border: "1.5px solid #d9dee5", fontSize: 16, color: "#273142", outline: "none", marginBottom: 20, fontFamily: "inherit" }} />
-                <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#7b8494", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Picture</label>
-                <label style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 12, border: "1.5px dashed #d9dee5", background: "#f8fafc", cursor: "pointer", marginBottom: 28 }}>
-                    <span style={{ fontSize: 20 }}>📁</span>
-                    <span style={{ fontSize: 14, color: "#7b8494", fontWeight: 600 }}>{uploading ? "Uploading..." : selectedFile ? selectedFile.name : "Choose image..."}</span>
+                       style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", borderRadius: 10, border: BORDER, fontSize: 14, color: "#1a1a1a", outline: "none", marginBottom: 16, fontFamily: FONT }} />
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#888", letterSpacing: "0.5px", marginBottom: 6 }}>PICTURE</label>
+                <label style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10, border: `0.5px dashed #e0ebe0`, background: "#f7f9f7", cursor: "pointer", marginBottom: 24 }}>
+                    <span style={{ fontSize: 18 }}>📁</span>
+                    <span style={{ fontSize: 13, color: "#888", fontWeight: 500 }}>{uploading ? "Uploading..." : selectedFile ? selectedFile.name : "Choose image..."}</span>
                     <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
                         const file = e.target.files?.[0]; if (!file) return;
                         setSelectedFile(file); setUploading(true);
@@ -60,9 +63,9 @@ function BrandModal({ open, mode, brand, onSubmit, onClose }) {
                         finally { setUploading(false); }
                     }} />
                 </label>
-                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-                    <button onClick={onClose} style={{ padding: "12px 22px", borderRadius: 10, border: "1px solid #d9dee5", background: "#fff", fontSize: 15, fontWeight: 700, color: "#374151", cursor: "pointer" }}>Cancel</button>
-                    <button onClick={handleSubmit} disabled={uploading} style={{ padding: "12px 22px", borderRadius: 10, border: "none", background: uploading ? "#a3d9b8" : "#2e9d5b", fontSize: 15, fontWeight: 700, color: "#fff", cursor: uploading ? "not-allowed" : "pointer" }}>{mode === "edit" ? "Save Changes" : "Add Brand"}</button>
+                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                    <button onClick={onClose} style={{ padding: "9px 20px", borderRadius: 10, border: BORDER, background: "#fff", fontSize: 14, fontWeight: 600, color: "#1a1a1a", cursor: "pointer", fontFamily: FONT }}>Cancel</button>
+                    <button onClick={handleSubmit} disabled={uploading} style={{ padding: "9px 20px", borderRadius: 10, border: "none", background: uploading ? "#a3d9b8" : BRAND, fontSize: 14, fontWeight: 600, color: "#fff", cursor: uploading ? "not-allowed" : "pointer", fontFamily: FONT }}>{mode === "edit" ? "Save Changes" : "Add Brand"}</button>
                 </div>
             </div>
         </div>
@@ -72,30 +75,32 @@ function BrandModal({ open, mode, brand, onSubmit, onClose }) {
 function BrandCard({ brand, onEdit, onArchive }) {
     const [expanded, setExpanded] = useState(false);
     return (
-        <div style={{ background: "#fff", borderRadius: 16, border: `1px solid ${expanded ? "#b9dec6" : "#e6eaef"}`, overflow: "hidden", transition: "border-color 0.15s", opacity: brand.archived ? 0.6 : 1 }}>
-            <div onClick={() => setExpanded((v) => !v)} style={{ padding: "20px 18px 16px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 72, height: 72, borderRadius: 14, background: "#f1f3f6", border: "1px solid #e6eaef", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                    {brand.picture ? <img src={brand.picture} alt={brand.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 28, color: "#b0b8c4" }}>🏷️</span>}
+        <div style={{ background: "#fff", borderRadius: 12, border: expanded ? `1px solid ${BRAND}` : BORDER, overflow: "hidden", transition: "border-color 0.15s", opacity: brand.archived ? 0.6 : 1, fontFamily: FONT }}>
+            <div onClick={() => setExpanded((v) => !v)} style={{ padding: "18px 16px 14px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 64, height: 64, borderRadius: 12, background: "#f7f9f7", border: BORDER, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                    {brand.picture ? <img src={brand.picture} alt={brand.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 26, color: "#bbb" }}>🏷️</span>}
                 </div>
                 <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: "#273142" }}>{brand.name}</div>
-                    {brand.archived && <span style={{ display: "inline-block", marginTop: 6, padding: "3px 10px", borderRadius: 999, background: "#fff7e8", color: "#d97706", border: "1px solid #f5d29c", fontSize: 12, fontWeight: 700 }}>Archived</span>}
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>{brand.name}</div>
+                    {brand.archived && <span style={{ display: "inline-block", marginTop: 4, padding: "2px 8px", borderRadius: 999, background: "#fffbeb", color: "#d97706", fontSize: 11, fontWeight: 600 }}>Archived</span>}
                 </div>
-                <div style={{ fontSize: 13, color: "#b0b8c4", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</div>
+                <div style={{ fontSize: 12, color: "#bbb", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</div>
             </div>
             {expanded && (
-                <div style={{ borderTop: "1px solid #eef1f4", padding: "14px 18px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ fontSize: 13, color: "#7b8494" }}><span style={{ fontWeight: 700 }}>ID:</span> #{brand.id}</div>
+                <div style={{ borderTop: BORDER, padding: "12px 16px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 12, color: "#888" }}><span style={{ fontWeight: 600 }}>ID:</span> #{brand.id}</div>
                     {brand.picture && (
-                        <div style={{ fontSize: 13, color: "#7b8494", wordBreak: "break-all" }}>
-                            <span style={{ fontWeight: 700 }}>URL:</span>{" "}
-                            <a href={brand.picture} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: "#2e9d5b", textDecoration: "underline" }}>{brand.picture}</a>
+                        <div style={{ fontSize: 12, color: "#888", wordBreak: "break-all" }}>
+                            <span style={{ fontWeight: 600 }}>URL:</span>{" "}
+                            <a href={brand.picture} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: BRAND, textDecoration: "underline" }}>{brand.picture}</a>
                         </div>
                     )}
-                    { !brand.archived && <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                        <button onClick={(e) => { e.stopPropagation(); onEdit(brand); }} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: "1px solid #d9dee5", background: "#fff", fontSize: 14, fontWeight: 700, color: "#374151", cursor: "pointer" }}>Edit</button>
-                        <button onClick={(e) => { e.stopPropagation(); onArchive(brand); }} style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: "1px solid #fde9b0", background: "#fffbf0", fontSize: 14, fontWeight: 700, color: "#d97706", cursor: "pointer" }}>Archive</button>
-                    </div> }
+                    {!brand.archived && (
+                        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                            <button onClick={(e) => { e.stopPropagation(); onEdit(brand); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: BORDER, background: "#fff", fontSize: 13, fontWeight: 600, color: "#1a1a1a", cursor: "pointer", fontFamily: FONT }}>Edit</button>
+                            <button onClick={(e) => { e.stopPropagation(); onArchive(brand); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "0.5px solid #f5d29c", background: "#fffbeb", fontSize: 13, fontWeight: 600, color: "#d97706", cursor: "pointer", fontFamily: FONT }}>Archive</button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -109,12 +114,8 @@ export default function ConfigurationBrands({ brands, loading, error, search, on
     const [archiveModal, setArchiveModal] = useState({ open: false, brand: null });
     const [page, setPage] = useState(0);
 
-    const filtered = useMemo(() => brands
-        .filter((b) => b.name.toLowerCase().includes(search.toLowerCase()) && (showArchived || !b.archived))
-        .sort((a, b) => b.id - a.id), [brands, search, showArchived]);
-
+    const filtered = useMemo(() => brands.filter((b) => b.name.toLowerCase().includes(search.toLowerCase()) && (showArchived || !b.archived)).sort((a, b) => b.id - a.id), [brands, search, showArchived]);
     useEffect(() => { setPage(0); }, [search, showArchived]);
-
     const paginated = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
 
     const openCreate = () => { setModalMode("create"); setEditingBrand(null); setModalOpen(true); };
@@ -136,20 +137,20 @@ export default function ConfigurationBrands({ brands, loading, error, search, on
 
     return (
         <>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", height: 50, width: 300, borderRadius: 12, border: "1px solid #d9dee5", padding: "0 16px", background: "#fff", boxSizing: "border-box" }}>
-                    <input placeholder="Search brands..." value={search} onChange={(e) => onSearchChange(e.target.value)}
-                           style={{ border: "none", outline: "none", width: "100%", fontSize: 15, background: "transparent", color: "#2d3340", fontFamily: "inherit" }} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, fontFamily: FONT }}>
+                <div style={{ display: "flex", alignItems: "center", height: 42, width: 280, borderRadius: 10, border: BORDER, padding: "0 14px", background: "#fff", boxSizing: "border-box", gap: 8 }}>
+                    <i className="ti ti-search" style={{ fontSize: 15, color: "#aaa" }} aria-hidden="true" />
+                    <input placeholder="Search brands..." value={search} onChange={(e) => onSearchChange(e.target.value)} style={{ border: "none", outline: "none", width: "100%", fontSize: 13, background: "transparent", color: "#1a1a1a", fontFamily: FONT }} />
                 </div>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <button onClick={onToggleArchived} style={{ height: 50, borderRadius: 12, padding: "0 18px", border: showArchived ? "1px solid #2e9d5b" : "1px solid #d9dee5", background: showArchived ? "#f0faf4" : "#fff", color: showArchived ? "#2e9d5b" : "#273142", fontWeight: 600, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}>{showArchived ? "✓ Showing Archived" : "Show Archived"}</button>
-                    <button onClick={openCreate} style={{ height: 50, borderRadius: 12, padding: "0 22px", background: "#2e9d5b", color: "#fff", border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 12px rgba(46,157,91,0.18)", whiteSpace: "nowrap" }}>+ Add Brand</button>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <button onClick={onToggleArchived} style={{ height: 42, borderRadius: 10, padding: "0 16px", border: showArchived ? `1px solid ${BRAND}` : BORDER, background: showArchived ? "#e6f7ed" : "#fff", color: showArchived ? BRAND : "#1a1a1a", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>{showArchived ? "✓ Showing Archived" : "Show Archived"}</button>
+                    <button onClick={openCreate} style={{ height: 42, borderRadius: 10, padding: "0 18px", background: BRAND, color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT, boxShadow: "0 2px 8px rgba(23,168,74,0.2)" }}>+ Add Brand</button>
                 </div>
             </div>
-            {loading ? <div style={{ padding: 24, color: "#7f8792", fontSize: 15 }}>Loading...</div>
-                : error ? <div style={{ padding: 24, color: "#d14343", fontSize: 15 }}>{error}</div>
-                    : filtered.length === 0 ? <div style={{ padding: 24, color: "#7f8792", fontSize: 15 }}>No brands found.</div>
-                        : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
+            {loading ? <div style={{ padding: 24, color: "#888", fontSize: 14, fontFamily: FONT }}>Loading...</div>
+                : error ? <div style={{ padding: 24, color: "#dc2626", fontSize: 14, fontFamily: FONT }}>{error}</div>
+                    : filtered.length === 0 ? <div style={{ padding: 24, color: "#888", fontSize: 14, fontFamily: FONT }}>No brands found.</div>
+                        : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
                             {paginated.map((brand) => <BrandCard key={brand.id} brand={brand} onEdit={openEdit} onArchive={(b) => setArchiveModal({ open: true, brand: b })} />)}
                         </div>}
             <Pagination total={filtered.length} page={page} onPage={setPage} />

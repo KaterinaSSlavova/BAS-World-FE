@@ -2,182 +2,90 @@ import { useState, useMemo, useEffect } from "react";
 import { createCategory, updateCategory, archiveCategory } from "../lib/api/categories";
 import { ConfirmArchiveModal } from "./ConfigurationShared.jsx";
 
-const PER_PAGE = 8;
-
-// ─── Pagination ───────────────────────────────────────────────
+const BRAND = "#17a84a";
+const FONT = "'Plus Jakarta Sans', system-ui, sans-serif";
+const BORDER = "0.5px solid #e0ebe0";
+const PER_PAGE = 9;
 
 function Pagination({ total, page, onPage }) {
     const totalPages = Math.ceil(total / PER_PAGE);
     if (totalPages <= 1) return null;
     return (
         <div style={{ display: "flex", gap: 6, justifyContent: "center", alignItems: "center", marginTop: 8 }}>
-            <button onClick={() => onPage(page - 1)} disabled={page === 0} style={{
-                padding: "8px 14px", borderRadius: 9, border: "1px solid #d9dee5",
-                background: "#fff", fontWeight: 700, fontSize: 14,
-                color: page === 0 ? "#c4c9d2" : "#374151",
-                cursor: page === 0 ? "default" : "pointer",
-            }}>‹</button>
+            <button onClick={() => onPage(page - 1)} disabled={page === 0} style={{ padding: "6px 12px", borderRadius: 8, border: BORDER, background: page === 0 ? "#f7f9f7" : "#fff", fontWeight: 600, fontSize: 13, color: page === 0 ? "#ccc" : BRAND, cursor: page === 0 ? "default" : "pointer", fontFamily: FONT }}>← Prev</button>
             {Array.from({ length: totalPages }, (_, i) => (
-                <button key={i} onClick={() => onPage(i)} style={{
-                    padding: "8px 14px", borderRadius: 9,
-                    border: i === page ? "1px solid #2e9d5b" : "1px solid #d9dee5",
-                    background: i === page ? "#2e9d5b" : "#fff",
-                    fontWeight: 700, fontSize: 14,
-                    color: i === page ? "#fff" : "#374151",
-                    cursor: "pointer",
-                }}>{i + 1}</button>
+                <button key={i} onClick={() => onPage(i)} style={{ width: 32, height: 32, borderRadius: 8, border: i === page ? "none" : BORDER, background: i === page ? BRAND : "#fff", fontWeight: 600, fontSize: 13, color: i === page ? "#fff" : "#444", cursor: "pointer", fontFamily: FONT }}>{i + 1}</button>
             ))}
-            <button onClick={() => onPage(page + 1)} disabled={page === totalPages - 1} style={{
-                padding: "8px 14px", borderRadius: 9, border: "1px solid #d9dee5",
-                background: "#fff", fontWeight: 700, fontSize: 14,
-                color: page === totalPages - 1 ? "#c4c9d2" : "#374151",
-                cursor: page === totalPages - 1 ? "default" : "pointer",
-            }}>›</button>
+            <button onClick={() => onPage(page + 1)} disabled={page === totalPages - 1} style={{ padding: "6px 12px", borderRadius: 8, border: BORDER, background: page === totalPages - 1 ? "#f7f9f7" : "#fff", fontWeight: 600, fontSize: 13, color: page === totalPages - 1 ? "#ccc" : BRAND, cursor: page === totalPages - 1 ? "default" : "pointer", fontFamily: FONT }}>Next →</button>
         </div>
     );
 }
 
-// ─── Category Modal ───────────────────────────────────────────
-
 function CategoryModal({ open, mode, category, allCategories, onSubmit, onClose }) {
     const [name, setName] = useState(category?.name ?? "");
     const [parentId, setParentId] = useState(category?.parentId ?? "");
-
     if (!open) return null;
-
     const handleSubmit = () => {
         if (!name.trim()) return;
         onSubmit({ name: name.trim(), parentId: parentId !== "" ? Number(parentId) : undefined });
     };
-
     const parentOptions = allCategories.filter((c) => !c.archived && c.id !== category?.id);
-
     return (
-        <div style={{
-            position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)",
-            zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
-        }} onClick={onClose}>
-            <div style={{
-                background: "#fff", borderRadius: 18, padding: "32px 28px",
-                width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(15,23,42,0.18)",
-            }} onClick={(e) => e.stopPropagation()}>
-                <h2 style={{ margin: "0 0 24px", fontSize: 22, fontWeight: 800, color: "#1f2937" }}>
-                    {mode === "edit" ? "Edit Category" : "Add Category"}
-                </h2>
-                <label style={{
-                    display: "block", fontSize: 13, fontWeight: 700, color: "#7b8494",
-                    textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8,
-                }}>Name</label>
-                <input
-                    autoFocus value={name} onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter category name..."
-                    onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                    style={{
-                        width: "100%", boxSizing: "border-box", padding: "13px 16px",
-                        borderRadius: 12, border: "1.5px solid #d9dee5", fontSize: 16,
-                        color: "#273142", outline: "none", marginBottom: 20, fontFamily: "inherit",
-                    }}
-                />
-                <label style={{
-                    display: "block", fontSize: 13, fontWeight: 700, color: "#7b8494",
-                    textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8,
-                }}>
-                    Parent Category{" "}
-                    <span style={{ fontWeight: 400, textTransform: "none", color: "#b0b8c4" }}>(optional)</span>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={onClose}>
+            <div style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", width: "100%", maxWidth: 460, boxShadow: "0 24px 60px rgba(0,0,0,0.15)", border: BORDER, fontFamily: FONT }} onClick={(e) => e.stopPropagation()}>
+                <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: "#1a1a1a" }}>{mode === "edit" ? "Edit Category" : "Add Category"}</h2>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#888", letterSpacing: "0.5px", marginBottom: 6 }}>NAME</label>
+                <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter category name..." onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                       style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", borderRadius: 10, border: BORDER, fontSize: 14, color: "#1a1a1a", outline: "none", marginBottom: 16, fontFamily: FONT }} />
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#888", letterSpacing: "0.5px", marginBottom: 6 }}>
+                    PARENT CATEGORY <span style={{ fontWeight: 400, textTransform: "none", color: "#bbb" }}>(optional)</span>
                 </label>
-                <select value={parentId} onChange={(e) => setParentId(e.target.value)} style={{
-                    width: "100%", boxSizing: "border-box", padding: "13px 16px",
-                    borderRadius: 12, border: "1.5px solid #d9dee5", fontSize: 16,
-                    color: parentId === "" ? "#b0b8c4" : "#273142",
-                    outline: "none", marginBottom: 28, fontFamily: "inherit",
-                    background: "#fff", cursor: "pointer",
-                }}>
+                <select value={parentId} onChange={(e) => setParentId(e.target.value)}
+                        style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", borderRadius: 10, border: BORDER, fontSize: 14, color: parentId === "" ? "#bbb" : "#1a1a1a", outline: "none", marginBottom: 24, fontFamily: FONT, background: "#fff", cursor: "pointer" }}>
                     <option value="">No parent</option>
-                    {parentOptions.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
+                    {parentOptions.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-                    <button onClick={onClose} style={{
-                        padding: "12px 22px", borderRadius: 10, border: "1px solid #d9dee5",
-                        background: "#fff", fontSize: 15, fontWeight: 700, color: "#374151", cursor: "pointer",
-                    }}>Cancel</button>
-                    <button onClick={handleSubmit} style={{
-                        padding: "12px 22px", borderRadius: 10, border: "none",
-                        background: "#2e9d5b", fontSize: 15, fontWeight: 700, color: "#fff",
-                        cursor: "pointer", boxShadow: "0 4px 12px rgba(46,157,91,0.18)",
-                    }}>{mode === "edit" ? "Save Changes" : "Add Category"}</button>
+                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                    <button onClick={onClose} style={{ padding: "9px 20px", borderRadius: 10, border: BORDER, background: "#fff", fontSize: 14, fontWeight: 600, color: "#1a1a1a", cursor: "pointer", fontFamily: FONT }}>Cancel</button>
+                    <button onClick={handleSubmit} style={{ padding: "9px 20px", borderRadius: 10, border: "none", background: BRAND, fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer", fontFamily: FONT }}>{mode === "edit" ? "Save Changes" : "Add Category"}</button>
                 </div>
             </div>
         </div>
     );
 }
 
-// ─── Category Table ───────────────────────────────────────────
-
 function CategoryTable({ items, allCategories, onEdit, onArchive, loading, error }) {
-    if (loading) return <div style={{ padding: 24, color: "#7f8792", fontSize: 15 }}>Loading...</div>;
-    if (error) return <div style={{ padding: 24, color: "#d14343", fontSize: 15 }}>{error}</div>;
-
+    if (loading) return <div style={{ padding: 24, color: "#888", fontSize: 14, fontFamily: FONT }}>Loading...</div>;
+    if (error) return <div style={{ padding: 24, color: "#dc2626", fontSize: 14, fontFamily: FONT }}>{error}</div>;
     const getParentName = (parentId) => {
         if (!parentId) return null;
         return allCategories.find((c) => c.id === parentId)?.name ?? `#${parentId}`;
     };
-
     return (
-        <div style={{ background: "#fff", borderRadius: 18, border: "1px solid #e6eaef", overflow: "hidden" }}>
-            {items.length === 0 ? (
-                <div style={{ padding: "32px 24px", color: "#7f8792", fontSize: 15 }}>No categories found.</div>
-            ) : (
+        <div style={{ background: "#fff", borderRadius: 12, border: BORDER, overflow: "hidden", fontFamily: FONT }}>
+            {items.length === 0 ? <div style={{ padding: "28px 20px", color: "#888", fontSize: 14 }}>No categories found.</div> : (
                 <>
-                    <div style={{
-                        display: "grid", gridTemplateColumns: "80px 1fr 160px auto",
-                        gap: 16, padding: "18px 24px", borderBottom: "1px solid #eef1f4",
-                        background: "#fbfcfd", fontSize: 12, fontWeight: 800, color: "#7b8494",
-                        textTransform: "uppercase", letterSpacing: "0.08em", alignItems: "center",
-                    }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 160px auto", gap: 16, padding: "10px 20px", background: "#f7f9f7", borderBottom: BORDER, fontSize: 11, fontWeight: 600, color: "#aaa", textTransform: "uppercase", letterSpacing: "1px", alignItems: "center" }}>
                         <div>ID</div><div>Name</div><div>Parent</div><div>Actions</div>
                     </div>
-                    {items.map((item) => {
+                    {items.map((item, i) => {
                         const parentName = getParentName(item.parentId);
                         return (
-                            <div key={item.id} style={{
-                                display: "grid", gridTemplateColumns: "80px 1fr 160px auto",
-                                gap: 16, padding: "20px 24px", borderBottom: "1px solid #eef1f4",
-                                alignItems: "center", opacity: item.archived ? 0.6 : 1,
-                            }}>
-                                <div style={{ fontSize: 14, color: "#7b8494", fontWeight: 600 }}>#{item.id}</div>
-                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                    <span style={{ fontSize: 16, fontWeight: 700, color: "#273142" }}>{item.name}</span>
-                                    {item.archived && (
-                                        <span style={{
-                                            padding: "2px 8px", borderRadius: 999, background: "#fff7e8",
-                                            color: "#d97706", border: "1px solid #f5d29c", fontSize: 11, fontWeight: 700,
-                                        }}>Archived</span>
-                                    )}
+                            <div key={item.id} style={{ display: "grid", gridTemplateColumns: "80px 1fr 160px auto", gap: 16, padding: "14px 20px", borderBottom: i === items.length - 1 ? "none" : BORDER, alignItems: "center", opacity: item.archived ? 0.6 : 1 }}>
+                                <div style={{ fontSize: 12, color: "#aaa", fontWeight: 600 }}>#{item.id}</div>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>{item.name}</span>
+                                    {item.archived && <span style={{ padding: "2px 8px", borderRadius: 999, background: "#fffbeb", color: "#d97706", fontSize: 11, fontWeight: 600 }}>Archived</span>}
                                 </div>
-                                <div style={{ fontSize: 14, color: "#7b8494" }}>
-                                    {parentName
-                                        ? <span style={{
-                                            padding: "3px 10px", borderRadius: 999,
-                                            background: "#f1f3f6", color: "#5b6475",
-                                            fontSize: 13, fontWeight: 600,
-                                        }}>{parentName}</span>
-                                        : <span style={{ color: "#c4c9d2" }}>—</span>}
+                                <div style={{ fontSize: 13, color: "#888" }}>
+                                    {parentName ? <span style={{ padding: "3px 10px", borderRadius: 999, background: "#f0f4f0", color: "#555", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>{parentName}</span> : <span style={{ color: "#ddd" }}>—</span>}
                                 </div>
-                                { !item.archived && <div style={{ display: "flex", gap: 8 }}>
-                                    <button onClick={() => onEdit(item)} style={{
-                                        padding: "8px 16px", borderRadius: 9, border: "1px solid #d9dee5",
-                                        background: "#fff", fontSize: 14, fontWeight: 700, color: "#374151", cursor: "pointer",
-                                    }}>Edit</button>
-                                    <button onClick={() => onArchive(item)} style={{
-                                        padding: "8px 16px", borderRadius: 9,
-                                        border: "1px solid #fde9b0",
-                                        background: "#fffbf0",
-                                        fontSize: 14, fontWeight: 700,
-                                        color: "#d97706", cursor: "pointer",
-                                    }}>Archive</button>
-                                </div> }
+                                {!item.archived && (
+                                    <div style={{ display: "flex", gap: 8 }}>
+                                        <button onClick={() => onEdit(item)} style={{ padding: "6px 14px", borderRadius: 8, border: BORDER, background: "#fff", fontSize: 13, fontWeight: 600, color: "#1a1a1a", cursor: "pointer", fontFamily: FONT }}>Edit</button>
+                                        <button onClick={() => onArchive(item)} style={{ padding: "6px 14px", borderRadius: 8, border: "0.5px solid #f5d29c", background: "#fffbeb", fontSize: 13, fontWeight: 600, color: "#d97706", cursor: "pointer", fontFamily: FONT }}>Archive</button>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
@@ -187,8 +95,6 @@ function CategoryTable({ items, allCategories, onEdit, onArchive, loading, error
     );
 }
 
-// ─── Configuration Categories Tab ─────────────────────────────
-
 export default function ConfigurationCategories({ categories, loading, error, search, onSearchChange, showArchived, onToggleArchived, onReload }) {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState("create");
@@ -196,13 +102,8 @@ export default function ConfigurationCategories({ categories, loading, error, se
     const [archiveModal, setArchiveModal] = useState({ open: false, item: null });
     const [page, setPage] = useState(0);
 
-    const filtered = useMemo(() => categories
-            .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) && (showArchived || !c.archived))
-            .sort((a, b) => b.id - a.id),
-        [categories, search, showArchived]);
-
+    const filtered = useMemo(() => categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) && (showArchived || !c.archived)).sort((a, b) => b.id - a.id), [categories, search, showArchived]);
     useEffect(() => { setPage(0); }, [search, showArchived]);
-
     const paginated = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
 
     const openCreate = () => { setModalMode("create"); setEditingCategory(null); setModalOpen(true); };
@@ -212,77 +113,32 @@ export default function ConfigurationCategories({ categories, loading, error, se
         try {
             if (modalMode === "create") await createCategory(name, parentId);
             else await updateCategory(editingCategory.id, name, parentId);
-            await onReload();
-            setModalOpen(false);
-        } catch (err) {
-            console.error(err);
-            alert("Failed to save category.");
-        }
+            await onReload(); setModalOpen(false);
+        } catch (err) { console.error(err); alert("Failed to save category."); }
     };
 
     const confirmArchive = async () => {
-        try {
-            await archiveCategory(archiveModal.item.id);
-            await onReload();
-        } catch (err) {
-            console.error(err);
-            alert("Failed to archive category.");
-        } finally {
-            setArchiveModal({ open: false, item: null });
-        }
+        try { await archiveCategory(archiveModal.item.id); await onReload(); }
+        catch (err) { console.error(err); alert("Failed to archive category."); }
+        finally { setArchiveModal({ open: false, item: null }); }
     };
 
     return (
         <>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                <div style={{
-                    display: "flex", alignItems: "center", height: 50, width: 300,
-                    borderRadius: 12, border: "1px solid #d9dee5",
-                    padding: "0 16px", background: "#fff", boxSizing: "border-box",
-                }}>
-                    <input
-                        placeholder="Search categories..."
-                        value={search}
-                        onChange={(e) => onSearchChange(e.target.value)}
-                        style={{
-                            border: "none", outline: "none", width: "100%",
-                            fontSize: 15, background: "transparent",
-                            color: "#2d3340", fontFamily: "inherit",
-                        }}
-                    />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, fontFamily: FONT }}>
+                <div style={{ display: "flex", alignItems: "center", height: 42, width: 280, borderRadius: 10, border: BORDER, padding: "0 14px", background: "#fff", boxSizing: "border-box", gap: 8 }}>
+                    <i className="ti ti-search" style={{ fontSize: 15, color: "#aaa" }} aria-hidden="true" />
+                    <input placeholder="Search categories..." value={search} onChange={(e) => onSearchChange(e.target.value)} style={{ border: "none", outline: "none", width: "100%", fontSize: 13, background: "transparent", color: "#1a1a1a", fontFamily: FONT }} />
                 </div>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <button onClick={onToggleArchived} style={{
-                        height: 50, borderRadius: 12, padding: "0 18px",
-                        border: showArchived ? "1px solid #2e9d5b" : "1px solid #d9dee5",
-                        background: showArchived ? "#f0faf4" : "#fff",
-                        color: showArchived ? "#2e9d5b" : "#273142",
-                        fontWeight: 600, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap",
-                    }}>{showArchived ? "✓ Showing Archived" : "Show Archived"}</button>
-                    <button onClick={openCreate} style={{
-                        height: 50, borderRadius: 12, padding: "0 22px",
-                        background: "#2e9d5b", color: "#fff", border: "none",
-                        fontWeight: 700, fontSize: 15, cursor: "pointer",
-                        boxShadow: "0 4px 12px rgba(46,157,91,0.18)", whiteSpace: "nowrap",
-                    }}>+ Add Category</button>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <button onClick={onToggleArchived} style={{ height: 42, borderRadius: 10, padding: "0 16px", border: showArchived ? `1px solid ${BRAND}` : BORDER, background: showArchived ? "#e6f7ed" : "#fff", color: showArchived ? BRAND : "#1a1a1a", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>{showArchived ? "✓ Showing Archived" : "Show Archived"}</button>
+                    <button onClick={openCreate} style={{ height: 42, borderRadius: 10, padding: "0 18px", background: BRAND, color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT, boxShadow: "0 2px 8px rgba(23,168,74,0.2)" }}>+ Add Category</button>
                 </div>
             </div>
-
-            <CategoryTable items={paginated} allCategories={categories}
-                           onEdit={openEdit}
-                           onArchive={(item) => setArchiveModal({ open: true, item })}
-                           loading={loading} error={error} />
-
+            <CategoryTable items={paginated} allCategories={categories} onEdit={openEdit} onArchive={(item) => setArchiveModal({ open: true, item })} loading={loading} error={error} />
             <Pagination total={filtered.length} page={page} onPage={setPage} />
-
-            <CategoryModal
-                key={`${modalOpen}-${editingCategory?.id}`}
-                open={modalOpen} mode={modalMode}
-                category={editingCategory} allCategories={categories}
-                onSubmit={handleSubmit} onClose={() => setModalOpen(false)} />
-            <ConfirmArchiveModal open={archiveModal.open} item={archiveModal.item}
-                                 entityLabel="Category" onConfirm={confirmArchive}
-                                 onClose={() => setArchiveModal({ open: false, item: null })} />
+            <CategoryModal key={`${modalOpen}-${editingCategory?.id}`} open={modalOpen} mode={modalMode} category={editingCategory} allCategories={categories} onSubmit={handleSubmit} onClose={() => setModalOpen(false)} />
+            <ConfirmArchiveModal open={archiveModal.open} item={archiveModal.item} entityLabel="Category" onConfirm={confirmArchive} onClose={() => setArchiveModal({ open: false, item: null })} />
         </>
     );
 }
