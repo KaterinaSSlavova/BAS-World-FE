@@ -3,7 +3,6 @@ import { getAllProductDepots } from "../lib/api/productDepots";
 import { getDepotOverview } from "../lib/api/depots";
 import { getProductInsights } from "../lib/api/productsInsights";
 import AppLayout from "../components/AppLayout";
-import StatCard from "../components/StatCard";
 
 function formatPrice(value) {
     return new Intl.NumberFormat("en-EU", {
@@ -17,9 +16,109 @@ function isActive(status) {
     return (status ?? "").toUpperCase() === "ACTIVE";
 }
 
+function isDraft(status) {
+    return (status ?? "").toUpperCase() === "DRAFT";
+}
+
 function formatStatus(status) {
     const safeStatus = status ?? "UNKNOWN";
     return safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1).toLowerCase();
+}
+
+function StatCard({ label, value, sub, accentColor }) {
+    return (
+        <div style={{
+            background: "#fff",
+            border: "0.5px solid #e0ebe0",
+            borderRadius: 12,
+            padding: "18px 20px",
+            borderLeft: `3px solid ${accentColor}`,
+        }}>
+            <div style={{ fontSize: 11, color: "#aaa", letterSpacing: "1px", fontWeight: 600, marginBottom: 8 }}>
+                {label}
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "#1a1a1a", lineHeight: 1 }}>
+                {value}
+            </div>
+            <div style={{ fontSize: 12, color: accentColor, marginTop: 6, fontWeight: 500 }}>
+                {sub}
+            </div>
+        </div>
+    );
+}
+
+function TableRow({ sku, name, category, price, status }) {
+    const [hovered, setHovered] = useState(false);
+    const active = isActive(status);
+    const draft = isDraft(status);
+
+    return (
+        <div
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr",
+                padding: "18px 20px",
+                borderBottom: "0.5px solid #f0f4f0",
+                alignItems: "center",
+                background: hovered ? "#f8faf8" : "#fff",
+                transition: "background 0.15s",
+            }}
+        >
+            <div style={{ fontSize: 12, color: "#aaa", fontWeight: 600 }}>{sku}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>{name}</div>
+            <div style={{ fontSize: 12, color: "#888" }}>{category}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>{price}</div>
+            <div>
+                <span style={{
+                    padding: "3px 10px",
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    background: active ? "#e6f7ed" : draft ? "#fffbeb" : "#f3f4f6",
+                    color: active ? "#17a84a" : draft ? "#d97706" : "#6b7280",
+                }}>
+                    {formatStatus(status)}
+                </span>
+            </div>
+        </div>
+    );
+}
+
+function DepotCard({ name, location, count }) {
+    const [hovered, setHovered] = useState(false);
+    return (
+        <div
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+                background: hovered ? "#f0faf3" : "#fff",
+                border: "0.5px solid #e0ebe0",
+                borderRadius: 10,
+                padding: "14px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                transition: "background 0.15s",
+            }}
+        >
+            <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: "#e6f7ed", display: "flex",
+                alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
+                <i className="ti ti-building-warehouse" style={{ fontSize: 18, color: "#17a84a" }} aria-hidden="true" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>{name}</div>
+                <div style={{ fontSize: 11, color: "#888", marginTop: 1 }}>{location}</div>
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#17a84a", whiteSpace: "nowrap" }}>
+                {count} products
+            </div>
+        </div>
+    );
 }
 
 export default function Dashboard() {
@@ -44,13 +143,11 @@ export default function Dashboard() {
             try {
                 setLoading(true);
                 setError("");
-
                 const [productData, depotData, insightsData] = await Promise.all([
                     getAllProductDepots(),
                     getDepotOverview(),
                     getProductInsights(),
                 ]);
-
                 setProducts(productData ?? []);
                 setDepots(depotData?.depots ?? []);
                 setInsights(insightsData);
@@ -61,7 +158,6 @@ export default function Dashboard() {
                 setLoading(false);
             }
         };
-
         void load();
     }, []);
 
@@ -83,189 +179,159 @@ export default function Dashboard() {
 
     return (
         <AppLayout>
-            <div style={{ marginBottom: 28 }}>
-                <h1 style={{ fontSize: isMobile ? 24 : 28, fontWeight: 800, color: "#1f2937", margin: 0 }}>
-                    Dashboard
-                </h1>
-                <p style={{ color: "#7f8792", margin: "4px 0 0", fontSize: isMobile ? 14 : 16 }}>
-                    Cross-sell product management overview
-                </p>
-            </div>
-
             <div style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
-                gap: 16,
-                marginBottom: 28,
+                fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+                background: "#f7f9f7",
+                height: "100vh",
+                overflow: "hidden",
+                padding: isMobile ? 16 : 28,
+                textAlign: "left",
+                display: "flex",
+                flexDirection: "column",
+                boxSizing: "border-box",
             }}>
-                <StatCard
-                    label="TOTAL PRODUCTS"
-                    value={String(insights?.totalProducts ?? 0)}
-                    sub="All products"
-                    subColor="#2e9d5b"
-                />
-                <StatCard
-                    label="UNAVAILABLE"
-                    value={String(insights?.unavailableItems ?? 0)}
-                    sub="Out of stock"
-                    subColor="#d14343"
-                />
-                <StatCard
-                    label="LOW STOCK"
-                    value={String(insights?.lowStockProducts ?? 0)}
-                    sub="Needs attention"
-                    subColor="#d97706"
-                />
-                <StatCard
-                    label="INVENTORY VALUE"
-                    value={formatPrice(insights?.inventoryValue ?? 0)}
-                    sub="Across all products"
-                    subColor="#7f8792"
-                />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 20 }}>
-                <div style={{
-                    flex: 2,
-                    background: "#fff",
-                    border: "1px solid #e6eaef",
-                    borderRadius: 18,
-                    overflow: "hidden",
-                }}>
-                    <div style={{ padding: "20px 24px", borderBottom: "1px solid #eef1f4" }}>
-                        <h2 style={{ fontSize: 15, fontWeight: 700, color: "#1f2937", margin: 0 }}>
-                            Recent Products
-                        </h2>
-                    </div>
-
-                    {isMobile ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12 }}>
-                            {products.slice(0, 8).map((item, index) => {
-                                const p = item.product ?? {};
-                                const firstDepot = item.depots?.[0] ?? {};
-                                return (
-                                    <div
-                                        key={`${p.sku}-${index}`}
-                                        style={{
-                                            border: "1px solid #eef1f4",
-                                            borderRadius: 12,
-                                            padding: "12px 14px",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            gap: 6,
-                                        }}
-                                    >
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                            <div style={{ fontSize: 14, fontWeight: 700, color: "#273142", flex: 1, marginRight: 8 }}>
-                                                {p.name}
-                                            </div>
-                                            <span style={{
-                                                display: "inline-flex", alignItems: "center",
-                                                padding: "4px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700,
-                                                background: isActive(p.status) ? "#e8f5ec" : "#f3f4f6",
-                                                color: isActive(p.status) ? "#2e9d5b" : "#6b7280",
-                                                border: isActive(p.status) ? "1px solid #b9dec6" : "1px solid #d1d5db",
-                                                whiteSpace: "nowrap",
-                                            }}>
-                                                {formatStatus(p.status)}
-                                            </span>
-                                        </div>
-                                        <div style={{ fontSize: 12, color: "#7b8494", fontWeight: 600 }}>SKU: {p.sku}</div>
-                                        <div style={{ display: "flex", gap: 16 }}>
-                                            <div style={{ fontSize: 12, color: "#6b7280" }}>{p.category?.name ?? "Unknown"}</div>
-                                            <div style={{ fontSize: 13, fontWeight: 600, color: "#273142" }}>
-                                                {formatPrice(firstDepot.salePrice ?? 0)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <>
-                            <div style={{
-                                display: "grid",
-                                gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr",
-                                gap: 12, padding: "12px 24px",
-                                background: "#fbfcfd", borderBottom: "1px solid #eef1f4",
-                                fontSize: 11, fontWeight: 800, color: "#7b8494",
-                                textTransform: "uppercase", letterSpacing: "0.08em",
-                            }}>
-                                <div>SKU</div><div>Product</div><div>Category</div><div>Price</div><div>Status</div>
-                            </div>
-                            {products.slice(0, 8).map((item, i) => {
-                                const p = item.product ?? {};
-                                const firstDepot = item.depots?.[0] ?? {};
-                                return (
-                                    <div
-                                        key={`${p.sku}-${i}`}
-                                        style={{
-                                            display: "grid",
-                                            gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr",
-                                            gap: 12, padding: "14px 24px",
-                                            borderBottom: i === Math.min(products.length, 8) - 1 ? "none" : "1px solid #f0f4f0",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <div style={{ fontSize: 13, color: "#7b8494", fontWeight: 600 }}>{p.sku}</div>
-                                        <div style={{ fontSize: 14, fontWeight: 700, color: "#273142" }}>{p.name}</div>
-                                        <div style={{ fontSize: 13, color: "#6b7280" }}>{p.category?.name ?? "Unknown"}</div>
-                                        <div style={{ fontSize: 14, fontWeight: 600, color: "#273142" }}>
-                                            {formatPrice(firstDepot.salePrice ?? 0)}
-                                        </div>
-                                        <div>
-                                            <span style={{
-                                                display: "inline-flex", alignItems: "center",
-                                                padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700,
-                                                background: isActive(p.status) ? "#e8f5ec" : "#f3f4f6",
-                                                color: isActive(p.status) ? "#2e9d5b" : "#6b7280",
-                                                border: isActive(p.status) ? "1px solid #b9dec6" : "1px solid #d1d5db",
-                                            }}>
-                                                {formatStatus(p.status)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </>
-                    )}
+                <div style={{ marginBottom: 20 }}>
+                    <h1 style={{
+                        fontSize: isMobile ? 22 : 26,
+                        fontWeight: 700,
+                        color: "#1a1a1a",
+                        margin: 0,
+                        letterSpacing: "-0.5px",
+                        textAlign: "left",
+                    }}>
+                        Dashboard
+                    </h1>
+                    <p style={{ color: "#888", margin: "4px 0 0", fontSize: 14, fontWeight: 400 }}>
+                        Cross-sell product management overview
+                    </p>
                 </div>
 
                 <div style={{
-                    flex: isMobile ? "unset" : 1,
-                    background: "#fff",
-                    border: "1px solid #e6eaef",
-                    borderRadius: 18,
-                    overflow: "hidden",
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
+                    gap: 14,
+                    marginBottom: 20,
                 }}>
-                    <div style={{ padding: "20px 24px", borderBottom: "1px solid #eef1f4" }}>
-                        <h2 style={{ fontSize: 15, fontWeight: 700, color: "#1f2937", margin: 0 }}>
-                            Depot Overview
-                        </h2>
-                    </div>
+                    <StatCard label="TOTAL PRODUCTS" value={String(insights?.totalProducts ?? 0)} sub="All products" accentColor="#17a84a" />
+                    <StatCard label="UNAVAILABLE" value={String(insights?.unavailableItems ?? 0)} sub="Out of stock" accentColor="#e53935" />
+                    <StatCard label="LOW STOCK" value={String(insights?.lowStockProducts ?? 0)} sub="Needs attention" accentColor="#f59e0b" />
+                    <StatCard label="INVENTORY VALUE" value={formatPrice(insights?.inventoryValue ?? 0)} sub="Across all products" accentColor="#6366f1" />
+                </div>
+
+                <div style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr",
+                    gap: 16,
+                    flex: 1,
+                    overflow: "hidden",
+                    minHeight: 0,
+                    alignItems: "start",
+                }}>
                     <div style={{
-                        padding: "12px 16px",
-                        display: isMobile ? "grid" : "flex",
-                        gridTemplateColumns: isMobile ? "1fr 1fr" : undefined,
-                        flexDirection: isMobile ? undefined : "column",
-                        gap: 10,
+                        background: "#fff",
+                        border: "0.5px solid #e0ebe0",
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        display: "flex",
+                        flexDirection: "column",
                     }}>
-                        {depots.map((d, index) => (
-                            <div
-                                key={`${d.depotName ?? "depot"}-${index}`}
-                                style={{ border: "1px solid #f0f4f0", borderRadius: 10, padding: "14px 16px" }}
-                            >
-                                <div style={{ fontSize: 14, fontWeight: 700, color: "#273142", marginBottom: 4 }}>
-                                    {d.depotName ?? "Unknown depot"}
-                                </div>
-                                <div style={{ fontSize: 12, color: "#7f8792", marginBottom: 8 }}>
-                                    📍 {d.location ?? "Unknown location"}
-                                </div>
-                                <div style={{ fontSize: 12, color: "#555", fontWeight: 500 }}>
-                                    ◈ {d.numberOfProducts ?? 0} products
-                                </div>
+                        <div style={{
+                            padding: "16px 20px",
+                            borderBottom: "0.5px solid #e0ebe0",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            flexShrink: 0,
+                        }}>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a" }}>Recent Products</div>
+                            <span style={{ fontSize: 12, color: "#17a84a", cursor: "pointer", fontWeight: 500 }}>View all →</span>
+                        </div>
+
+                        {isMobile ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, overflowY: "auto" }}>
+                                {products.slice(0, 8).map((item, i) => {
+                                    const p = item.product ?? {};
+                                    const firstDepot = item.depots?.[0] ?? {};
+                                    return (
+                                        <div key={`${p.sku}-${i}`} style={{
+                                            border: "0.5px solid #e0ebe0",
+                                            borderRadius: 10,
+                                            padding: "12px 14px",
+                                        }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                                                <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a", flex: 1, marginRight: 8 }}>{p.name}</div>
+                                                <span style={{
+                                                    padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600,
+                                                    background: isActive(p.status) ? "#e6f7ed" : isDraft(p.status) ? "#fffbeb" : "#f3f4f6",
+                                                    color: isActive(p.status) ? "#17a84a" : isDraft(p.status) ? "#d97706" : "#6b7280",
+                                                }}>
+                                                    {formatStatus(p.status)}
+                                                </span>
+                                            </div>
+                                            <div style={{ fontSize: 11, color: "#aaa", fontWeight: 600, marginBottom: 4 }}>SKU: {p.sku}</div>
+                                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                                <div style={{ fontSize: 12, color: "#888" }}>{p.category?.name ?? "Unknown"}</div>
+                                                <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>{formatPrice(firstDepot.salePrice ?? 0)}</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        ))}
+                        ) : (
+                            <>
+                                <div style={{
+                                    display: "grid",
+                                    gridTemplateColumns: "1fr 2fr 1fr 1fr 1fr",
+                                    padding: "8px 20px",
+                                    background: "#f7f9f7",
+                                    borderBottom: "0.5px solid #e0ebe0",
+                                    flexShrink: 0,
+                                }}>
+                                    {["SKU", "PRODUCT", "CATEGORY", "PRICE", "STATUS"].map(h => (
+                                        <div key={h} style={{ fontSize: 11, color: "#aaa", fontWeight: 600, letterSpacing: "1px" }}>{h}</div>
+                                    ))}
+                                </div>
+                                <div style={{ overflowY: "auto", flex: 1 }}>
+                                    {products.slice(0, 8).map((item, i) => {
+                                        const p = item.product ?? {};
+                                        const firstDepot = item.depots?.[0] ?? {};
+                                        return (
+                                            <TableRow
+                                                key={`${p.sku}-${i}`}
+                                                sku={p.sku}
+                                                name={p.name}
+                                                category={p.category?.name ?? "Unknown"}
+                                                price={formatPrice(firstDepot.salePrice ?? 0)}
+                                                status={p.status}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <div style={{
+                        background: "#fff",
+                        border: "0.5px solid #e0ebe0",
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        display: "flex",
+                        flexDirection: "column",
+                    }}>
+                        <div style={{ padding: "16px 20px", borderBottom: "0.5px solid #e0ebe0", flexShrink: 0 }}>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a" }}>Depot Overview</div>
+                        </div>
+                        <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", flex: 1 }}>
+                            {depots.map((d, i) => (
+                                <DepotCard
+                                    key={`${d.depotName}-${i}`}
+                                    name={d.depotName ?? "Unknown depot"}
+                                    location={d.location ?? "Unknown location"}
+                                    count={d.numberOfProducts ?? 0}
+                                />
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
