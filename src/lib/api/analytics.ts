@@ -9,13 +9,13 @@ export type StockValueByCategory = {
 export type ProductCountByDepot = {
     depotId: number;
     depotName: string;
-    totalValue: number;
+    totalProducts: number;
 };
 
 export type InventoryValueByDepot = {
     depotId: number;
     depotName: string;
-    totalProducts: number;
+    totalValue: number;
 };
 
 export type HighestQuantityProduct = {
@@ -49,7 +49,24 @@ export type AnalyticsDTO = {
     highestQuantityProduct: HighestQuantityProduct | null;
 };
 
+type BackendAnalyticsDTO = {
+    stockValueByCategory: StockValueByCategory[];
+    productCountByDepot: InventoryValueByDepot[];
+    inventoryValueByDepot: ProductCountByDepot[];
+    highestQuantityProduct: HighestQuantityProduct | null;
+};
+
 export async function getAnalytics(): Promise<AnalyticsDTO> {
-    const response = await api.get<AnalyticsDTO>("/analytics");
-    return response.data;
+    const response = await api.get<BackendAnalyticsDTO>("/analytics");
+
+    return {
+        stockValueByCategory: response.data.stockValueByCategory,
+
+        // Backend currently returns these two fields swapped.
+        // Normalize them here until the API is fixed.
+        productCountByDepot: response.data.inventoryValueByDepot,
+        inventoryValueByDepot: response.data.productCountByDepot,
+
+        highestQuantityProduct: response.data.highestQuantityProduct,
+    };
 }

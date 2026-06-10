@@ -22,7 +22,7 @@ export default function ProductCountByDepotChart({ data }: Props) {
         labels: data.map((item) => item.depotName),
         datasets: [
             {
-                data: data.map((item) => item.totalValue),
+                data: data.map((item) => item.totalProducts),
                 backgroundColor: [
                     "#239b66",
                     "#6b7280",
