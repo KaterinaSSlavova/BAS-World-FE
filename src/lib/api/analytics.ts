@@ -9,13 +9,13 @@ export type StockValueByCategory = {
 export type ProductCountByDepot = {
     depotId: number;
     depotName: string;
-    totalValue: number;
+    totalProducts: number;
 };
 
 export type InventoryValueByDepot = {
     depotId: number;
     depotName: string;
-    totalProducts: number;
+    totalValue: number;
 };
 
 export type HighestQuantityProduct = {
@@ -44,8 +44,8 @@ export type HighestQuantityProduct = {
 
 export type AnalyticsDTO = {
     stockValueByCategory: StockValueByCategory[];
-    productCountByDepot: ProductCountByDepot[];
     inventoryValueByDepot: InventoryValueByDepot[];
+    productCountByDepot: ProductCountByDepot[];
     highestQuantityProduct: HighestQuantityProduct | null;
 };
 

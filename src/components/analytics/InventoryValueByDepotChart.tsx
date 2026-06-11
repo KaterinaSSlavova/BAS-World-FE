@@ -27,7 +27,7 @@ export default function InventoryValueByDepotChart({ data }: Props) {
         datasets: [
             {
                 label: "Inventory Value",
-                data: data.map((item) => item.totalProducts),
+                data: data.map((item) => item.totalValue),
                 backgroundColor: "#239b66",
                 borderRadius: 8,
             },
